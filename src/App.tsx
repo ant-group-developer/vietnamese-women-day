@@ -4,6 +4,7 @@ import { Scene } from './scene/Scene'
 import { Petals } from './ui/Petals'
 import { LabelLayer } from './ui/LabelLayer'
 import { Intro } from './ui/Intro'
+import { CharacterPick } from './ui/CharacterPick'
 import { HUD } from './ui/HUD'
 import { DepartmentModal } from './ui/DepartmentModal'
 import { GiftVideo } from './ui/GiftVideo'
@@ -38,6 +39,7 @@ export default function App() {
         {phase === 'video' && <GiftVideo key="video" />}
         {phase === 'outro' && <Outro key="outro" />}
         {phase === 'intro' && <Intro key="intro" />}
+        {phase === 'pick' && <CharacterPick key="pick" />}
       </AnimatePresence>
     </>
   )

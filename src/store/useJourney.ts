@@ -3,7 +3,7 @@ import { GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { mascot, stationT } from '../scene/path'
 import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
-export type Phase = 'intro' | 'journey' | 'gift' | 'opening' | 'video' | 'outro'
+export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro'
 
 interface JourneyState {
   phase: Phase
@@ -33,6 +33,8 @@ interface JourneyState {
   openSettings: () => void
   closeSettings: () => void
   setCharacter: (id: CharacterId) => void
+  /** Chọn nhân vật ở màn đầu rồi vào hành trình; lưu lại để lần sau không hỏi. */
+  confirmCharacter: (id: CharacterId) => void
   goTo: (index: number) => void
   arrive: (index: number) => void
   closeModal: () => void
@@ -54,6 +56,13 @@ function savedCharacter(): CharacterId {
     return isCharacterId(v) ? v : DEFAULT_CHARACTER
   } catch {
     return DEFAULT_CHARACTER
+  }
+}
+function hasSavedCharacter(): boolean {
+  try {
+    return isCharacterId(localStorage.getItem(CHARACTER_KEY))
+  } catch {
+    return false
   }
 }
 function tutorialSeen(): boolean {
@@ -78,7 +87,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   settingsOpen: false,
   character: savedCharacter(),
 
-  start: () => set({ phase: 'journey', tutorialOpen: !tutorialSeen() }),
+  start: () => (hasSavedCharacter() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
   openTutorial: () => set({ tutorialOpen: true }),
   closeTutorial: (dontShowAgain) => {
     if (dontShowAgain) {
@@ -92,6 +101,10 @@ export const useJourney = create<JourneyState>((set, get) => ({
   },
   openSettings: () => set({ settingsOpen: true }),
   closeSettings: () => set({ settingsOpen: false }),
+  confirmCharacter: (id) => {
+    get().setCharacter(id)
+    set({ phase: 'journey', tutorialOpen: !tutorialSeen() })
+  },
   setCharacter: (id) => {
     try {
       localStorage.setItem(CHARACTER_KEY, id)

@@ -10,6 +10,8 @@ export interface CharacterSpec {
   id: CharacterId
   name: string
   emoji: string
+  /** Câu giới thiệu ngắn ở màn chọn nhân vật. */
+  tagline: string
   /** Màu lông chính (đầu, thân). */
   body: string
   /** Màu tay/chân, mặc định = body. */
@@ -256,6 +258,7 @@ export const CHARACTERS: Record<CharacterId, CharacterSpec> = {
     id: 'cat',
     name: 'Mèo Mi',
     emoji: '🐱',
+    tagline: 'Điệu đà, nơ đỏ, đi đâu cũng mang theo hoa.',
     body: CAT_WHITE,
     dress: '#ff5c8a',
     dressDark: '#e8457a',
@@ -267,6 +270,7 @@ export const CHARACTERS: Record<CharacterId, CharacterSpec> = {
     id: 'bunny',
     name: 'Thỏ Bông',
     emoji: '🐰',
+    tagline: 'Tai dài, nhảy chân sáo, thích cà rốt và lời khen.',
     body: BUNNY,
     dress: '#ff8fb3',
     dressDark: '#ff6f9c',
@@ -278,6 +282,7 @@ export const CHARACTERS: Record<CharacterId, CharacterSpec> = {
     id: 'bear',
     name: 'Gấu Nâu',
     emoji: '🐻',
+    tagline: 'Hiền lành, ôm ấm, luôn mang theo mật ong.',
     body: BEAR,
     dress: '#8ed6ff',
     dressDark: '#6cc3f5',
@@ -289,6 +294,7 @@ export const CHARACTERS: Record<CharacterId, CharacterSpec> = {
     id: 'panda',
     name: 'Gấu Trúc',
     emoji: '🐼',
+    tagline: 'Chậm rãi mà chắc, thích ngủ nhưng hôm nay dậy sớm vì 20/10.',
     body: PANDA_WHITE,
     limb: PANDA_BLACK,
     dress: '#5ed6b0',
@@ -301,6 +307,7 @@ export const CHARACTERS: Record<CharacterId, CharacterSpec> = {
     id: 'duck',
     name: 'Vịt Vàng',
     emoji: '🐥',
+    tagline: 'Lạch bạch, ồn ào, vui nhất đảo.',
     body: DUCK,
     dress: '#c77dff',
     dressDark: '#b05ef0',

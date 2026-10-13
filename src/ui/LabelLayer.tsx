@@ -7,7 +7,7 @@ export function LabelLayer() {
   const phase = useJourney((s) => s.phase)
   const visited = useJourney((s) => s.visited)
   const allVisited = visited.every(Boolean)
-  const visible = phase !== 'intro'
+  const visible = phase !== 'intro' && phase !== 'pick'
   const suggested = phase === 'journey' ? nextStationIndex(visited) : -1
 
   const giftState = !allVisited ? 'locked' : phase === 'gift' ? 'available suggested' : 'visited'
