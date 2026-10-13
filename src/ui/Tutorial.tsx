@@ -4,7 +4,7 @@ import { STATION_COUNT } from '../data/departments'
 import { useJourney } from '../store/useJourney'
 
 const STEPS = [
-  { icon: '🏠', title: 'Ghé thăm phòng ban', text: 'Bấm vào bất kỳ ngôi nhà nào, mèo sẽ chạy tới và mở thiệp giới thiệu các chị em.' },
+  { icon: '🏠', title: 'Ghé thăm phòng ban', text: 'Bấm vào bất kỳ ngôi nhà nào, bạn đồng hành sẽ chạy tới và mở thiệp giới thiệu các chị em.' },
   { icon: '🔄', title: 'Xoay và zoom bản đồ', text: 'Kéo để xoay, cuộn chuột hoặc chụm hai ngón để zoom. Hoặc dùng các nút ở góc phải dưới.' },
   { icon: '🌸', title: `Thu đủ ${STATION_COUNT} bông hoa`, text: 'Mỗi phòng ban ghé thăm tặng bạn 1 bông hoa. Đủ hoa là hộp quà bí mật sẽ mở ra 🎁' },
 ]

@@ -3,6 +3,7 @@ import { config } from '../config'
 import { useJourney } from '../store/useJourney'
 import { startBgm } from '../audio/sound'
 import { CHARACTERS } from '../scene/characters'
+import { CharacterAvatar } from './CharacterAvatar'
 
 export function Intro() {
   const start = useJourney((s) => s.start)
@@ -28,7 +29,7 @@ export function Intro() {
           animate={{ y: [0, -14, 0], rotate: [0, -6, 6, 0] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          {hasPicked ? character.emoji : '🌸'}
+          {hasPicked ? <CharacterAvatar spec={character} /> : '🌸'}
         </motion.div>
         <div className="intro-badge">{config.companyName} · 20/10</div>
         <h1>{config.title}</h1>

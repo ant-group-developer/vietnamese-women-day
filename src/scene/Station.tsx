@@ -1,12 +1,68 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Float, RoundedBox } from '@react-three/drei'
+import { Float, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Department } from '../data/departments'
 import { nextStationIndex, stationStatus, useJourney } from '../store/useJourney'
 import { layout } from './path'
 import { shade } from './utils'
 import { setLabelTarget } from './labels'
+import { mergePieces, natureUrl, PALETTE, recolorTexture, townUrl, type PiecePlacement } from './envAssets'
+import { InstancedModel, type Placement } from './Decor'
+
+/** Nhà lắp từ bộ Kenney Fantasy Town Kit: nền 2x2 ô, tường 1 tầng, mái cao 4 góc. */
+const HOUSE_SCALE = 0.9
+const PIECE_NAMES = ['wall', 'wall-door', 'wall-window-shutters', 'wall-window-round', 'wall-window-small', 'roof-high-corner', 'chimney'] as const
+const PIECE_URLS = PIECE_NAMES.map(townUrl)
+PIECE_URLS.forEach((u) => useGLTF.preload(u))
+
+// Mảnh tường nằm ở cạnh +X của ô; góc quay để đưa nó ra cạnh +Z, -X, -Z.
+const FACE = { px: 0, pz: -Math.PI / 2, nx: Math.PI, nz: Math.PI / 2 }
+// Mảnh mái góc có góc ngoài ở (-X, +Z) của ô.
+const ROOF_ROT: Record<string, number> = { '-1,1': 0, '1,1': Math.PI / 2, '1,-1': Math.PI, '-1,-1': -Math.PI / 2 }
+
+function buildHousePieces(): PiecePlacement[] {
+  const p = (name: string, x: number, y: number, z: number, rotY: number): PiecePlacement => ({ url: townUrl(name), pos: [x, y, z], rotY })
+  const pieces: PiecePlacement[] = [
+    // Mặt trước (+Z)
+    p('wall-window-shutters', -0.5, 0, 0.5, FACE.pz),
+    p('wall-door', 0.5, 0, 0.5, FACE.pz),
+    // Hai bên
+    p('wall-window-round', -0.5, 0, 0.5, FACE.nx),
+    p('wall', -0.5, 0, -0.5, FACE.nx),
+    p('wall-window-round', 0.5, 0, 0.5, FACE.px),
+    p('wall', 0.5, 0, -0.5, FACE.px),
+    // Mặt sau
+    p('wall-window-small', -0.5, 0, -0.5, FACE.nz),
+    p('wall', 0.5, 0, -0.5, FACE.nz),
+    p('chimney', 0.5, 0.95, -0.5, 0),
+  ]
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) pieces.push(p('roof-high-corner', sx * 0.5, 1, sz * 0.5, ROOF_ROT[`${sx},${sz}`]))
+  return pieces
+}
+const HOUSE_PIECES = buildHousePieces()
+const ROOF_FLOWER: Placement[] = [{ pos: [0, 0, 0], rot: 0.6, scale: 1 }]
+
+function House({ color }: { color: string }) {
+  const gltfs = useGLTF(PIECE_URLS)
+  const geometry = useMemo(() => {
+    const scenes = Object.fromEntries(gltfs.map((g, i) => [PIECE_URLS[i], g.scene]))
+    return mergePieces(scenes, HOUSE_PIECES)
+  }, [gltfs])
+  const material = useMemo(() => {
+    const base = (gltfs[0].scene.getObjectByProperty('isMesh', true) as THREE.Mesh).material as THREE.MeshStandardMaterial
+    const m = base.clone()
+    // Ô màu tường (tím nhạt) và ô màu mái trên colormap của Kenney, tô theo màu phòng ban.
+    m.map = recolorTexture(base.map!, [
+      { x: 64, y: 256, w: 64, h: 128, color: shade(color, 0.62) },
+      { x: 0, y: 384, w: 128, h: 128, color },
+    ])
+    m.roughness = 0.85
+    m.metalness = 0
+    return m
+  }, [gltfs, color])
+  return <mesh geometry={geometry} material={material} scale={HOUSE_SCALE} castShadow receiveShadow />
+}
 
 interface Props {
   index: number
@@ -28,8 +84,6 @@ export function Station({ index, dept }: Props) {
     prevStatus.current = status
   }
 
-  const color = dept.color
-  const roof = shade(dept.color, -0.28)
   const { housePos } = layout.stations[index]
 
   useEffect(() => {
@@ -80,47 +134,11 @@ export function Station({ index, dept }: Props) {
           document.body.style.cursor = 'auto'
         }}
       >
-        {/* Thân nhà */}
-        <RoundedBox args={[1.7, 1.3, 1.5]} radius={0.12} smoothness={3} position={[0, 0.65, 0]} castShadow receiveShadow>
-          <meshStandardMaterial color={color} />
-        </RoundedBox>
-        {/* Mái nhà */}
-        <mesh position={[0, 1.78, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-          <coneGeometry args={[1.45, 1.0, 4]} />
-          <meshStandardMaterial color={roof} flatShading />
-        </mesh>
-        {/* Ống khói */}
-        <mesh position={[0.55, 1.9, -0.3]} castShadow>
-          <boxGeometry args={[0.28, 0.5, 0.28]} />
-          <meshStandardMaterial color={roof} />
-        </mesh>
-        {/* Cửa */}
-        <mesh position={[0, 0.42, 0.76]}>
-          <boxGeometry args={[0.46, 0.8, 0.06]} />
-          <meshStandardMaterial color="#fff6e9" />
-        </mesh>
-        <mesh position={[0.13, 0.42, 0.8]}>
-          <sphereGeometry args={[0.04, 12, 10]} />
-          <meshStandardMaterial color="#ffd166" />
-        </mesh>
-        {/* Cửa sổ */}
-        {[-0.5, 0.5].map((x) => (
-          <mesh key={x} position={[x, 0.85, 0.76]}>
-            <boxGeometry args={[0.34, 0.34, 0.06]} />
-            <meshStandardMaterial color="#cdefff" />
-          </mesh>
-        ))}
+        <House color={dept.color} />
         {/* Hoa trên mái khi đã thăm */}
         {status === 'visited' && (
-          <group position={[-0.45, 2.1, 0.35]}>
-            <mesh>
-              <sphereGeometry args={[0.22, 16, 12]} />
-              <meshStandardMaterial color="#ff7aa8" />
-            </mesh>
-            <mesh position={[0, 0.02, 0.18]}>
-              <sphereGeometry args={[0.09, 12, 10]} />
-              <meshStandardMaterial color="#ffd166" />
-            </mesh>
+          <group position={[0, 2.0, 0]}>
+            <InstancedModel url={natureUrl('flower_redA')} size={0.75} palette={PALETTE} paletteKey="base" items={ROOF_FLOWER} />
           </group>
         )}
         {/* Bóng bay */}

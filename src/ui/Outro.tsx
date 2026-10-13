@@ -22,7 +22,7 @@ export function Outro() {
     <motion.div className="outro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.7 }}>
         <motion.div
-          style={{ fontSize: 'clamp(64px, 14vw, 110px)', lineHeight: 1 }}
+          className="outro-icon"
           animate={{ scale: [1, 1.12, 1] }}
           transition={{ repeat: Infinity, duration: 1.6 }}
         >

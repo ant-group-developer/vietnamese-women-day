@@ -28,6 +28,10 @@ interface JourneyState {
   settingsOpen: boolean
   /** Nhân vật dẫn đường đã chọn. */
   character: CharacterId
+  /** Thời điểm bấm vào hộp quà khi còn khoá (để lắc hộp và hiện nhắc nhở). */
+  giftHintAt: number
+  /** Bấm hộp quà từ xa: tới nơi thì tự mở. */
+  openGiftOnArrive: boolean
 
   start: () => void
   openTutorial: () => void
@@ -41,6 +45,8 @@ interface JourneyState {
   arrive: (index: number) => void
   closeModal: () => void
   openGift: () => void
+  /** Bấm vào hộp quà: còn khoá thì nhắc, đủ hoa thì chạy tới và mở. */
+  tapGift: () => void
   playVideo: () => void
   finishVideo: () => void
   restart: () => void
@@ -99,6 +105,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
   tutorialOpen: false,
   settingsOpen: false,
   character: savedCharacter(),
+  giftHintAt: 0,
+  openGiftOnArrive: false,
 
   start: () => (hasSavedCharacter() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
   openTutorial: () => set({ tutorialOpen: true }),
@@ -138,12 +146,15 @@ export const useJourney = create<JourneyState>((set, get) => ({
       return
     }
     // Có thể đổi hướng ngay cả khi đang đi
-    set({ targetIndex: index })
+    set({ targetIndex: index, openGiftOnArrive: false })
   },
 
   arrive: (index) => {
     if (index === GIFT_INDEX) {
-      set({ currentIndex: index, targetIndex: null, phase: 'gift' })
+      const autoOpen = get().openGiftOnArrive
+      set({ currentIndex: index, targetIndex: null, phase: 'gift', openGiftOnArrive: false })
+      // Chờ camera quay về hộp quà một chút rồi mới mở.
+      if (autoOpen) setTimeout(() => get().openGift(), 700)
       return
     }
     set({ currentIndex: index, targetIndex: null, openedIndex: index })
@@ -168,6 +179,22 @@ export const useJourney = create<JourneyState>((set, get) => ({
     set({ phase: 'opening' })
   },
 
+  tapGift: () => {
+    const s = get()
+    if (s.phase === 'gift') {
+      s.openGift()
+      return
+    }
+    if (s.phase !== 'journey' || s.openedIndex !== null || s.tutorialOpen || s.settingsOpen) return
+    if (!isStationAvailable(s, GIFT_INDEX)) {
+      set({ giftHintAt: Date.now() })
+      return
+    }
+    s.goTo(GIFT_INDEX)
+    if (get().phase === 'gift') get().openGift()
+    else set({ openGiftOnArrive: true })
+  },
+
   playVideo: () => set({ phase: 'video' }),
 
   finishVideo: () => set({ phase: 'outro' }),
@@ -181,6 +208,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
       openedIndex: null,
       lastFlowerAt: 0,
       lastVisitedIndex: -1,
+      openGiftOnArrive: false,
       cameraResetAt: Date.now(),
     }),
 

@@ -1,12 +1,16 @@
 # 🌸 Website chào mừng ngày 20/10 – Hành trình thu thập hoa
 
-Website 3D vui nhộn: chú mèo nhỏ dẫn người xem đi qua từng phòng ban trên một hòn đảo nổi, mỗi trạm giới thiệu các chị em của phòng ban đó. Thu đủ hoa thì mở hộp quà và phát video.
+Website 3D vui nhộn: một bạn đồng hành nhỏ dẫn người xem đi qua từng phòng ban trên một hòn đảo nổi, mỗi trạm giới thiệu các chị em của phòng ban đó. Thu đủ hoa thì mở hộp quà và phát video.
 
-- Bấm vào bất kỳ ngôi nhà nào (không cần theo thứ tự), mèo sẽ chạy tới đó và mở thiệp giới thiệu phòng ban.
+- Bấm vào bất kỳ ngôi nhà nào (không cần theo thứ tự), nhân vật sẽ chạy tới đó và mở thiệp giới thiệu phòng ban.
 - Kéo chuột/ngón tay để xoay bản đồ, cuộn chuột hoặc chụm hai ngón để zoom. Nút 🎯 đưa camera về sau nhân vật.
 - Nút "Đi tiếp" gợi ý phòng ban chưa thăm gần nhất. Thăm đủ mọi phòng thì hộp quà mở khoá.
 - Cụm nút góc phải dưới: phóng to, thu nhỏ, xoay trái/phải, về nhân vật, mở lại hướng dẫn. Hướng dẫn hiện lần đầu vào; tích "Không hiển thị lại" thì lưu trong localStorage của trình duyệt.
-- Lần đầu vào web sẽ chọn nhân vật dẫn đường (Thỏ Bông, Gà Con, Bọ Rùa), lựa chọn lưu trong localStorage; đổi lại ở nút ⚙️. Nhân vật là model GLB có animation từ bộ Cube Pets Free (sneznyj.itch.io/cube-pets), đặt trong `public/models`. Thêm nhân vật mới: bỏ GLB vào `public/models` và khai báo trong `src/scene/characters.tsx`.
+- Lần đầu vào web sẽ chọn nhân vật dẫn đường (19 con, mặc định Gà Con), lựa chọn lưu trong localStorage; đổi lại ở nút ⚙️. Nhân vật là model GLB có animation:
+  - Gà Con: bộ Cube Pets Free (sneznyj.itch.io/cube-pets), `public/models/Chick.glb`.
+  - 18 con còn lại: bộ Cozy Animals của Gamideo (`assets/Gamideo_cozy_animals`), texture đã thu về 1024px cho nhẹ, đặt trong `public/models/cozy`; ảnh thẻ chọn cắt từ `preview.png` của bộ, đặt trong `public/images/characters`. Rùa, hải cẩu chỉ có animation bơi; vẹt, chim ruồi bay lơ lửng.
+  - Thêm nhân vật mới: bỏ GLB vào `public/models` và khai báo trong `src/scene/characters.tsx` (tên clip đứng yên/di chuyển/chào, tỉ lệ, tốc độ bước).
+- Cảnh vật dùng model CC0 trong `public/models/env` (khai báo ở `src/scene/envAssets.ts`): cây, bụi, hoa, nấm, đá từ Kenney Nature Kit; nhà lắp từ mảnh tường/mái của Kenney Fantasy Town Kit (màu mái và tường lấy theo màu phòng ban); hộp quà từ Kenney Holiday Kit (nắp tách rời để mở); mây của Quaternius (poly.pizza). Gói gốc tải về nằm trong `assets/kenney` (không commit).
 - Trong thiệp phòng ban, bấm vào ảnh để xem lớn. Video quà giữ nguyên tỉ lệ gốc (ngang hay dọc đều không bị cắt).
 
 ## Chạy thử
@@ -80,7 +84,7 @@ src/
   data/siteData.ts       dữ liệu mặc định + tải cấu hình từ /api/config
   admin/                 trang cấu hình /admin
   store/useJourney.ts    trạng thái hành trình
-  scene/                 các thành phần 3D (đảo, đường, trạm, mèo, hộp quà, camera)
+  scene/                 các thành phần 3D (đảo, đường, trạm, nhân vật, hộp quà, camera)
   ui/                    intro, HUD, popup phòng ban, video, outro, cánh hoa rơi
   audio/sound.ts         âm thanh, playlist nhạc nền
 api/                     Vercel Functions: config (đọc/lưu), login, upload

@@ -1,22 +1,22 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useJourney } from '../store/useJourney'
 import { layout, mascot, stationT } from './path'
 import { playStep } from '../audio/sound'
-import { CHARACTER_LIST, CHARACTERS, type CharacterSpec } from './characters'
+import { CHARACTERS, type CharacterSpec } from './characters'
 
-const SPEED = 4.2 // đơn vị/giây
+const SPEED = 2.5 // đơn vị/giây
 const FADE = 0.25
 
 const tmpDir = new THREE.Vector3()
 const tmpLook = new THREE.Vector3()
 
-// Tải trước cả 3 model để đổi nhân vật không bị khựng.
-CHARACTER_LIST.forEach((c) => useGLTF.preload(c.model))
+// Tải trước nhân vật đã chọn; các nhân vật khác tải khi được chọn.
+useGLTF.preload(CHARACTERS[useJourney.getState().character].model)
 
-/** Model GLB có animation: Idle khi đứng, Run khi di chuyển, Trick khi tới nơi. */
+/** Model GLB có animation: clip đứng yên, clip di chuyển khi đi, clip "trick" một lần khi tới nơi. */
 function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkingRef: React.RefObject<boolean>; arrivedAt: React.RefObject<number> }) {
   const group = useRef<THREE.Group>(null)
   const gltf = useGLTF(spec.model)
@@ -24,13 +24,14 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
   const current = useRef<string>('')
   const lastArrive = useRef(0)
 
-  // Texture pixel-art 64x64: lọc Nearest cho nét, bật bóng đổ.
+  // Bật bóng đổ; texture pixel-art (Cube Pets 64x64) lọc Nearest cho nét.
   useEffect(() => {
     gltf.scene.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
       mesh.castShadow = true
       mesh.frustumCulled = false
+      if (!spec.pixelArt) return
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
       mats.forEach((m) => {
         const std = m as THREE.MeshStandardMaterial
@@ -45,7 +46,7 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
         }
       })
     })
-  }, [gltf])
+  }, [gltf, spec.pixelArt])
 
   const play = (name: string, once = false) => {
     const next = actions[name]
@@ -65,10 +66,14 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
   }
 
   useEffect(() => {
+    mixer.timeScale = spec.clipSpeed ?? 1
+  }, [mixer, spec.clipSpeed])
+
+  useEffect(() => {
     current.current = ''
-    play('Idle')
+    play(spec.clips.idle)
     const onFinished = () => {
-      if (current.current === 'Trick' || current.current === 'Jump') play('Idle')
+      if (current.current === spec.clips.trick) play(spec.clips.idle)
     }
     mixer.addEventListener('finished', onFinished)
     return () => {
@@ -78,19 +83,24 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actions, mixer])
 
-  useFrame(() => {
-    const run = actions.Run
+  useFrame(({ clock }) => {
+    const { idle, move, trick } = spec.clips
+    const moving = actions[move]
     if (walkingRef.current) {
-      if (current.current !== 'Run') play('Run')
-      // Khớp tốc độ clip với tốc độ di chuyển để chân không trượt.
-      if (run) run.timeScale = SPEED / (spec.runSpeed * spec.scale)
-    } else if (current.current === 'Run') {
-      play('Idle')
+      if (current.current !== move) play(move)
+      // Khớp tốc độ clip với tốc độ di chuyển để chân không trượt (có giới hạn cho đỡ quơ chân).
+      if (moving) moving.timeScale = Math.min(SPEED / (spec.moveSpeed * spec.scale), spec.maxTimeScale ?? Infinity)
+    } else if (current.current === move && move !== idle) {
+      play(idle)
+    } else if (moving && move === idle) {
+      moving.timeScale = 1
     }
     if (arrivedAt.current !== lastArrive.current) {
       lastArrive.current = arrivedAt.current
-      if (arrivedAt.current > 0) play('Trick', true)
+      if (arrivedAt.current > 0 && trick) play(trick, true)
     }
+    // Nhân vật bay: lơ lửng nhấp nhô.
+    if (spec.hover && group.current) group.current.position.y = spec.hover + Math.sin(clock.elapsedTime * 2.4) * 0.08
   })
 
   return (
@@ -110,7 +120,6 @@ export function Character() {
   const heading = useRef(new THREE.Vector3(1, 0, 0))
   const walkingRef = useRef(false)
   const arrivedAt = useRef(0)
-  const shadowRadius = useMemo(() => 0.3 * spec.scale, [spec])
 
   useFrame(({ clock }, dt) => {
     const time = clock.elapsedTime
@@ -149,10 +158,13 @@ export function Character() {
     <group ref={root}>
       {/* Bóng đổ mềm dưới chân */}
       <mesh ref={shadow} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[shadowRadius, 24]} />
+        <circleGeometry args={[spec.shadow, 24]} />
         <meshBasicMaterial color="#5a2d44" transparent opacity={0.16} depthWrite={false} />
       </mesh>
-      <PetModel key={spec.id} spec={spec} walkingRef={walkingRef} arrivedAt={arrivedAt} />
+      {/* Suspense riêng: đổi sang nhân vật chưa tải thì chỉ nhân vật biến mất trong lúc tải, không ẩn cả cảnh. */}
+      <Suspense fallback={null}>
+        <PetModel key={spec.id} spec={spec} walkingRef={walkingRef} arrivedAt={arrivedAt} />
+      </Suspense>
     </group>
   )
 }

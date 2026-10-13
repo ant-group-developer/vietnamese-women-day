@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { RoundedBox, Sparkles } from '@react-three/drei'
+import { Sparkles, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import confetti from 'canvas-confetti'
 import { useJourney } from '../store/useJourney'
@@ -8,9 +8,14 @@ import { layout } from './path'
 import { playSfx } from '../audio/sound'
 import { setLabelTarget } from './labels'
 import { GIFT_INDEX } from '../data/departments'
+import { PRESENT_URL, recolorTexture } from './envAssets'
+
+useGLTF.preload(PRESENT_URL)
+
+/** Bề rộng hộp quà sau khi phóng to (model gốc rộng 0.44). */
+const GIFT_SCALE = 5.2
 
 const BOX = '#ff6f91'
-const BOX_DARK = '#e8537a'
 const RIBBON = '#ffd166'
 const LOCKED = '#d6d0d4'
 const LOCKED_RIBBON = '#bdb5ba'
@@ -35,10 +40,57 @@ function burst() {
   )
 }
 
+/**
+ * Hộp quà Kenney Holiday Kit (present-a-cube): thân + nắp tách rời (node "lid").
+ * lidRef trỏ vào nhóm bọc ngoài nắp để GiftBox tự di chuyển nắp khi mở.
+ */
+function Present({ color, ribbon, lidRef }: { color: string; ribbon: string; lidRef: React.RefObject<THREE.Group | null> }) {
+  const { scene } = useGLTF(PRESENT_URL)
+  const { body, lidNode, lidPos, material } = useMemo(() => {
+    const root = scene.clone(true)
+    const lidNode = root.getObjectByName('lid')!
+    const body = root
+    body.remove(lidNode)
+    const base = (lidNode as THREE.Mesh).material as THREE.MeshStandardMaterial
+    const material = base.clone()
+    // Ô trắng (thân hộp) và ô đỏ (ruy băng) trên colormap.
+    material.map = recolorTexture(base.map!, [
+      { x: 0, y: 256, w: 64, h: 128, color },
+      { x: 192, y: 384, w: 64, h: 128, color: ribbon },
+    ])
+    material.roughness = 0.7
+    material.metalness = 0
+    for (const o of [body, lidNode])
+      o.traverse((m) => {
+        const mesh = m as THREE.Mesh
+        if (!mesh.isMesh) return
+        mesh.material = material
+        mesh.castShadow = true
+        mesh.receiveShadow = true
+      })
+    // Nắp xoay quanh gốc của chính nó: dời vị trí gốc ra nhóm bọc ngoài.
+    const lidPos = lidNode.position.clone()
+    lidNode.position.set(0, 0, 0)
+    return { body, lidNode, lidPos, material }
+  }, [scene, color, ribbon])
+  useEffect(() => () => material.dispose(), [material])
+
+  return (
+    <group position={[0, 0.24, 0]} scale={GIFT_SCALE}>
+      <primitive object={body} />
+      <group position={lidPos}>
+        <group ref={lidRef}>
+          <primitive object={lidNode} />
+        </group>
+      </group>
+    </group>
+  )
+}
+
 export function GiftBox() {
   const phase = useJourney((s) => s.phase)
   const allVisited = useJourney((s) => s.visited.every(Boolean))
-  const openGift = useJourney((s) => s.openGift)
+  const tapGift = useJourney((s) => s.tapGift)
   const playVideo = useJourney((s) => s.playVideo)
   const box = useRef<THREE.Group>(null)
   const lid = useRef<THREE.Group>(null)
@@ -52,6 +104,8 @@ export function GiftBox() {
   }, [housePos])
 
   const ready = phase === 'gift'
+  // Bấm được suốt hành trình: còn khoá thì lắc + nhắc, đủ hoa thì nhân vật chạy tới mở.
+  const clickable = phase === 'journey' || phase === 'gift'
   const opening = phase === 'opening'
   const opened = phase === 'video' || phase === 'outro'
   const locked = !allVisited
@@ -87,7 +141,10 @@ export function GiftBox() {
       }
       s = 1 + Math.sin(t * 3) * 0.03
     }
-    if (hover && ready) s *= 1.05
+    if (hover && clickable) s *= 1.05
+    // Lắc lắc "chưa mở được đâu" khi bấm lúc còn khoá.
+    const hintAge = (Date.now() - useJourney.getState().giftHintAt) / 1000
+    if (hintAge < 0.6) rotZ = Math.sin(hintAge * 40) * 0.12 * (1 - hintAge / 0.6)
     box.current.rotation.z = rotZ
     box.current.position.y = y
     box.current.scale.setScalar(s)
@@ -96,12 +153,11 @@ export function GiftBox() {
       const age = openStart.current >= 0 ? t - openStart.current : 3
       const k = Math.min(age / 1.2, 1)
       const e = 1 - Math.pow(1 - k, 3)
-      lid.current.position.y = 1.45 + e * 3.2 + Math.sin(t * 2) * 0.1
-      lid.current.position.z = e * 1.2
+      lid.current.position.set(0, (e * 3.2 + Math.sin(t * 2) * 0.1) / GIFT_SCALE, (e * 1.2) / GIFT_SCALE)
       lid.current.rotation.x = e * 0.9
       lid.current.rotation.z = Math.sin(t * 1.5) * 0.15 * e
     } else {
-      lid.current.position.set(0, 1.45, 0)
+      lid.current.position.set(0, 0, 0)
       lid.current.rotation.set(0, 0, 0)
     }
 
@@ -120,80 +176,40 @@ export function GiftBox() {
         <meshBasicMaterial color="#ffd166" transparent opacity={0} depthWrite={false} />
       </mesh>
 
-      {/* Bục đặt quà */}
-      <mesh position={[0, 0.12, 0]} receiveShadow>
-        <cylinderGeometry args={[1.9, 2.1, 0.24, 48]} />
-        <meshStandardMaterial color={locked ? '#e4dfe2' : '#ffd6e7'} />
-      </mesh>
-
       <group
-        ref={box}
         onClick={(e) => {
           e.stopPropagation()
-          if (ready) openGift()
+          if (!clickable) return
+          if (locked) playSfx('pop')
+          tapGift()
         }}
         onPointerOver={(e) => {
           e.stopPropagation()
           setHover(true)
-          if (ready) document.body.style.cursor = 'pointer'
+          if (clickable) document.body.style.cursor = 'pointer'
         }}
         onPointerOut={() => {
           setHover(false)
           document.body.style.cursor = 'auto'
         }}
       >
-        {/* Thân hộp */}
-        <RoundedBox args={[2.2, 1.7, 2.2]} radius={0.12} smoothness={3} position={[0, 1.08, 0]} castShadow receiveShadow>
-          <meshStandardMaterial color={color} />
-        </RoundedBox>
-        <mesh position={[0, 1.08, 0]}>
-          <boxGeometry args={[2.24, 1.72, 0.5]} />
-          <meshStandardMaterial color={ribbon} />
-        </mesh>
-        <mesh position={[0, 1.08, 0]}>
-          <boxGeometry args={[0.5, 1.72, 2.24]} />
-          <meshStandardMaterial color={ribbon} />
+        {/* Bục đặt quà */}
+        <mesh position={[0, 0.12, 0]} receiveShadow>
+          <cylinderGeometry args={[1.9, 2.1, 0.24, 48]} />
+          <meshStandardMaterial color={locked ? '#e4dfe2' : '#ffd6e7'} />
         </mesh>
 
-        {/* Nắp hộp */}
-        <group ref={lid} position={[0, 1.45, 0]}>
-          <RoundedBox args={[2.45, 0.5, 2.45]} radius={0.1} smoothness={3} position={[0, 0.5, 0]} castShadow>
-            <meshStandardMaterial color={locked ? '#c9c2c6' : BOX_DARK} />
-          </RoundedBox>
-          <mesh position={[0, 0.5, 0]}>
-            <boxGeometry args={[2.5, 0.52, 0.5]} />
-            <meshStandardMaterial color={ribbon} />
-          </mesh>
-          <mesh position={[0, 0.5, 0]}>
-            <boxGeometry args={[0.5, 0.52, 2.5]} />
-            <meshStandardMaterial color={ribbon} />
-          </mesh>
-          {/* Nơ */}
-          <group position={[0, 0.9, 0]}>
-            {[0, Math.PI / 2].map((ry) => (
-              <group key={ry} rotation={[0, ry, 0]}>
-                {[-0.45, 0.45].map((x) => (
-                  <mesh key={x} position={[x, 0.18, 0]} rotation={[0, 0, x > 0 ? 0.4 : -0.4]} scale={[1.2, 0.55, 0.5]} castShadow>
-                    <sphereGeometry args={[0.42, 20, 14]} />
-                    <meshStandardMaterial color={ribbon} />
-                  </mesh>
-                ))}
-              </group>
-            ))}
-            <mesh position={[0, 0.2, 0]}>
-              <sphereGeometry args={[0.22, 16, 12]} />
-              <meshStandardMaterial color={locked ? '#aaa2a7' : '#ffb347'} />
-            </mesh>
-          </group>
+        <group ref={box}>
+          <Present color={color} ribbon={ribbon} lidRef={lid} />
+
+          {/* Hoa và sao bay lên khi mở */}
+          {(opening || opened) && (
+            <group position={[0, 1.6, 0]}>
+              <Sparkles count={80} scale={[3.5, 4, 3.5]} size={12} speed={1.2} color="#ff7aa8" />
+              <Sparkles count={50} scale={[3, 5, 3]} size={8} speed={0.8} color="#ffd166" />
+            </group>
+          )}
         </group>
-
-        {/* Hoa và sao bay lên khi mở */}
-        {(opening || opened) && (
-          <group position={[0, 1.6, 0]}>
-            <Sparkles count={80} scale={[3.5, 4, 3.5]} size={12} speed={1.2} color="#ff7aa8" />
-            <Sparkles count={50} scale={[3, 5, 3]} size={8} speed={0.8} color="#ffd166" />
-          </group>
-        )}
       </group>
 
       {ready && (

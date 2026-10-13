@@ -20,6 +20,12 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0)
 const MIN_DIST = 5
 const MAX_DIST = 32
 
+/** Màn hình dọc (điện thoại) hẹp hơn nên lùi camera ra xa để thấy đủ nhà và đường. */
+function portraitZoom(width: number, height: number) {
+  const aspect = width / height
+  return aspect < 1 ? 1 + (1 - aspect) * 1.1 : 1
+}
+
 /**
  * Camera luôn cho phép xoay/zoom (OrbitControls), đồng thời bám theo nhân vật:
  * mỗi frame dịch cả target lẫn camera theo chuyển động của nhân vật nên góc nhìn
@@ -56,7 +62,7 @@ export function CameraRig() {
     if (!initialized.current) {
       initialized.current = true
       c.target.copy(focus)
-      camera.position.copy(focus).add(CAMERA_OFFSET)
+      camera.position.copy(focus).addScaledVector(CAMERA_OFFSET, portraitZoom(size.width, size.height))
     }
 
     // Dịch target về phía focus và dịch camera cùng một lượng để giữ góc nhìn.
@@ -83,10 +89,7 @@ export function CameraRig() {
 
     if (now < resetUntil.current) {
       const off = giftFocus ? GIFT_OFFSET : CAMERA_OFFSET
-      // Màn hình dọc (điện thoại) hẹp hơn nên lùi camera ra xa để thấy đủ nhà và đường.
-      const aspect = size.width / size.height
-      const zoomOut = aspect < 1 ? 1 + (1 - aspect) * 1.1 : 1
-      desired.copy(c.target).addScaledVector(off, zoomOut)
+      desired.copy(c.target).addScaledVector(off, portraitZoom(size.width, size.height))
       camera.position.lerp(desired, damp(dt, 3))
     }
     c.update()

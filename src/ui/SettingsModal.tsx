@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CHARACTER_LIST } from '../scene/characters'
+import { CharacterAvatar } from './CharacterAvatar'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
 import { VolumeIcon } from './icons'
@@ -50,7 +51,7 @@ export function SettingsModal() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <span className="character-emoji">{c.emoji}</span>
+                  <CharacterAvatar spec={c} />
                   <span className="character-name">{c.name}</span>
                   {current === c.id && <span className="character-check">✓</span>}
                 </motion.button>

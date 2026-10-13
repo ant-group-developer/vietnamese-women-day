@@ -137,6 +137,12 @@ button {
 .intro-card {
   max-width: 560px;
 }
+/* Màn thấp (điện thoại xoay ngang) không đủ chỗ thì cả màn cuộn; margin auto giữ nội dung ở giữa khi đủ chỗ
+   mà không bị cắt mép trên khi thiếu. */
+.intro,
+.outro { place-items: start center; overflow-y: auto; }
+.intro > *,
+.outro > * { margin-block: auto; }
 .intro-badge {
   display: inline-block;
   background: #fff;
@@ -175,7 +181,7 @@ button {
 
 /* ---------- Chọn nhân vật ---------- */
 .intro.pick { z-index: 21; }
-.pick-card { max-width: 640px; width: 100%; }
+.pick-card { max-width: 600px; width: 100%; }
 .pick-card h1 {
   font-size: clamp(28px, 6vw, 44px);
   line-height: 1.1;
@@ -184,14 +190,16 @@ button {
   text-shadow: 0 4px 0 #fff, 0 10px 24px rgba(240, 85, 138, 0.25);
 }
 .pick-card p { font-size: clamp(15px, 2.6vw, 18px); margin: 6px 0 18px; color: var(--rose-900); }
-.pick-grid { grid-template-columns: repeat(5, 1fr); margin-bottom: 12px; }
-.pick-grid .character-card { padding: 16px 6px 12px; }
+.character-grid.pick-grid {
+  grid-template-columns: repeat(5, 1fr);
+  margin-bottom: 20px;
+}
+.pick-grid .character-card { padding: 14px 6px 12px; }
 .pick-grid .character-emoji { font-size: 48px; }
-.pick-tagline { min-height: 1.5em; font-weight: 600; margin: 0 0 16px !important; }
 @media (max-width: 600px) {
-  .pick-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .pick-grid .character-emoji { font-size: 40px; }
-  .pick-grid .character-card { padding: 12px 4px 10px; }
+  .character-grid.pick-grid { gap: 8px; }
+  .pick-grid .character-emoji { font-size: 36px; }
+  .pick-grid .character-card { padding: 10px 2px 8px; }
 }
 
 /* ---------- HUD ---------- */
@@ -421,7 +429,7 @@ button {
 }
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -443,6 +451,15 @@ button {
   background: color-mix(in srgb, var(--c, var(--pink-200)) 18%, #fff);
 }
 .character-emoji { font-size: 44px; line-height: 1; }
+.character-avatar { display: grid; place-items: center; height: 60px; }
+.character-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  object-fit: cover;
+  display: block;
+}
+.intro-mascot .character-thumb { width: 96px; height: 96px; border-radius: 28px; box-shadow: 0 10px 24px rgba(240, 85, 138, 0.2); }
 .character-name { font-weight: 800; font-size: 14px; }
 .character-check {
   position: absolute;
@@ -564,10 +581,13 @@ button {
   flex: 1;
 }
 .members {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Flex thay cho grid để phòng ít người (1–2) vẫn được căn giữa. */
+  --cols: 3;
+  --gap: 18px;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 18px;
+  gap: var(--gap);
   max-width: 640px;
   margin: 0 auto;
 }
@@ -577,6 +597,7 @@ button {
   align-items: stretch;
   justify-content: flex-start;
   align-self: start;
+  width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
   text-align: center;
   background: none;
   padding: 0;
@@ -653,7 +674,7 @@ button {
   background: linear-gradient(135deg, var(--pink-400), var(--pink-500));
   box-shadow: var(--shadow), inset 0 -3px 0 rgba(0, 0, 0, 0.12);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
-  z-index: 2;
+  z-index: 3;
 }
 .video-deco {
   position: absolute;
@@ -731,6 +752,7 @@ button {
   text-shadow: 0 4px 0 #fff, 0 10px 24px rgba(240, 85, 138, 0.25);
 }
 .outro p { font-size: clamp(16px, 3vw, 20px); max-width: 560px; margin: 0 auto 24px; }
+.outro-icon { font-size: clamp(64px, 14vw, 110px); line-height: 1; }
 .outro .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 .loading-screen {
@@ -746,7 +768,7 @@ button {
 @media (max-width: 600px) {
   .btn { font-size: 16px; padding: 10px 20px; }
   .btn.big { font-size: 19px; padding: 14px 28px; }
-  .members { gap: 10px; }
+  .members { --gap: 10px; }
   .modal-body { padding: 14px 12px; }
   .member .name { font-size: 14px; }
   .cam-controls {
@@ -760,9 +782,38 @@ button {
   .hud-bottom { padding: 0 16px; }
   .hud-bottom .btn { max-width: 100%; justify-content: center; text-align: center; line-height: 1.15; }
   .hud-toast { font-size: 14px; top: 76px; }
-  .character-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .character-grid { gap: 6px; }
+  .character-card { padding: 10px 2px 8px; border-radius: 16px; }
+  .character-avatar { height: 46px; }
+  .character-thumb { width: 46px; height: 46px; border-radius: 12px; }
+  .character-name { font-size: 11px; line-height: 1.25; }
   .character-emoji { font-size: 36px; }
   .modal-head h2 { font-size: 22px; }
   .station-label { font-size: 12px; padding: 5px 10px; }
 }
 
+/* Màn hình thấp (điện thoại xoay ngang): thu nhỏ phần đầu các màn để còn chỗ cho nội dung chính. */
+@media (max-height: 500px) {
+  .intro, .outro { padding: 12px 24px; }
+  .intro-mascot { font-size: 56px; margin-bottom: 4px; }
+  .intro-mascot .character-thumb { width: 64px; height: 64px; border-radius: 20px; }
+  .intro h1 { font-size: 34px; margin: 4px 0; }
+  .intro p { margin: 4px 0 12px; }
+  .intro-badge { margin-bottom: 6px; }
+  .pick-card h1 { font-size: 28px; }
+  .pick-card p { margin: 2px 0 10px; }
+  .outro-icon { font-size: 52px; }
+  .outro h1 { font-size: 30px; margin: 4px 0; }
+  .outro p { margin-bottom: 14px; }
+  .modal-backdrop { padding: 10px; }
+  .modal-card { max-height: calc(100dvh - 20px); }
+  .modal-head { padding: 10px 56px 10px; }
+  .modal-head .icon { font-size: 28px; }
+  .modal-head h2 { font-size: 20px; margin: 2px 0; }
+  .modal-head p { font-size: 13px; }
+  .modal-foot { padding: 8px 16px 10px; }
+  .members { --cols: 4; }
+  .settings-card, .tutorial-card { max-height: calc(100dvh - 20px); }
+  .video-layer { padding: 34px 16px 10px; }
+  .video-frame { width: min(960px, 100%, calc((100dvh - 110px) * var(--ar, 16 / 9) + 48px)); }
+}

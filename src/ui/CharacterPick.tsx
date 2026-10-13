@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { CHARACTER_LIST, type CharacterId } from '../scene/characters'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
+import { useGLTF } from '@react-three/drei'
+import { CharacterAvatar } from './CharacterAvatar'
 
 /** Màn chọn nhân vật lần đầu vào web. Lựa chọn được lưu, các lần sau không hỏi lại. */
 export function CharacterPick() {
@@ -28,29 +30,26 @@ export function CharacterPick() {
               onClick={() => {
                 playSfx('pop')
                 setPicked(c.id)
+                useGLTF.preload(c.model)
               }}
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.2 + i * 0.07, type: 'spring', stiffness: 260, damping: 18 }}
+              transition={{ delay: 0.2 + i * 0.03, type: 'spring', stiffness: 260, damping: 18 }}
               whileHover={{ scale: 1.06 }}
               whileTap={{ scale: 0.95 }}
             >
               <motion.span
-                className="character-emoji"
+                className="character-avatar"
                 animate={picked === c.id ? { y: [0, -8, 0], rotate: [0, -8, 8, 0] } : { y: 0, rotate: 0 }}
                 transition={{ duration: 1.6, repeat: picked === c.id ? Infinity : 0 }}
               >
-                {c.emoji}
+                <CharacterAvatar spec={c} />
               </motion.span>
               <span className="character-name">{c.name}</span>
               {picked === c.id && <span className="character-check">✓</span>}
             </motion.button>
           ))}
         </div>
-
-        <motion.p key={spec.id} className="pick-tagline" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
-          {spec.emoji} {spec.tagline}
-        </motion.p>
 
         <motion.button className="btn big" onClick={() => confirmCharacter(picked)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
           Đi cùng {spec.name} 🌸

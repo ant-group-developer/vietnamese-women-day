@@ -13,6 +13,7 @@ export function HUD() {
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
   const lastVisitedIndex = useJourney((s) => s.lastVisitedIndex)
   const tutorialOpen = useJourney((s) => s.tutorialOpen)
+  const giftHintAt = useJourney((s) => s.giftHintAt)
   const { goTo, openGift, openSettings } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
@@ -34,6 +35,16 @@ export function HUD() {
     }
   }, [lastFlowerAt, lastVisitedIndex])
 
+  // Bấm hộp quà lúc còn khoá: nhắc còn bao nhiêu phòng ban.
+  const [giftHint, setGiftHint] = useState<string | null>(null)
+  useEffect(() => {
+    if (!giftHintAt) return
+    const remaining = STATION_COUNT - useJourney.getState().visited.filter(Boolean).length
+    setGiftHint(`🔒 Hộp quà còn khoá! Ghé thêm ${remaining} phòng ban nữa nhé`)
+    const t = setTimeout(() => setGiftHint(null), 2500)
+    return () => clearTimeout(t)
+  }, [giftHintAt])
+
   if (phase !== 'journey' && phase !== 'gift') return null
 
   const count = visited.filter(Boolean).length
@@ -50,6 +61,8 @@ export function HUD() {
   let toast: string | null = null
   if (tutorialOpen) {
     toast = null
+  } else if (giftHint) {
+    toast = giftHint
   } else if (flowerToast) {
     toast = flowerToast
   } else if (targetIndex !== null) {
