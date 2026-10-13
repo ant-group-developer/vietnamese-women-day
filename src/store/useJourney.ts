@@ -15,6 +15,8 @@ interface JourneyState {
   /** Trạm đang mở popup. */
   openedIndex: number | null
   audioOn: boolean
+  /** Âm lượng tổng (0–1), áp cho nhạc nền, hiệu ứng và video. */
+  volume: number
   /** Thời điểm yêu cầu đưa camera về góc nhìn mặc định sau nhân vật. */
   cameraResetAt: number
   /** Thời điểm và trạm vừa nhận hoa (để trigger animation HUD). */
@@ -43,6 +45,7 @@ interface JourneyState {
   finishVideo: () => void
   restart: () => void
   toggleAudio: () => void
+  setVolume: (v: number) => void
   resetCamera: () => void
 }
 
@@ -50,6 +53,15 @@ const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 
 const TUTORIAL_KEY = 'vn-woman-day:tutorial-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
+const VOLUME_KEY = 'vn-woman-day:volume'
+function savedVolume(): number {
+  try {
+    const v = parseFloat(localStorage.getItem(VOLUME_KEY) ?? '')
+    return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 1
+  } catch {
+    return 1
+  }
+}
 function savedCharacter(): CharacterId {
   try {
     const v = localStorage.getItem(CHARACTER_KEY)
@@ -80,6 +92,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   visited: freshVisited(),
   openedIndex: null,
   audioOn: true,
+  volume: savedVolume(),
   cameraResetAt: 0,
   lastFlowerAt: 0,
   lastVisitedIndex: -1,
@@ -172,6 +185,16 @@ export const useJourney = create<JourneyState>((set, get) => ({
     }),
 
   toggleAudio: () => set((s) => ({ audioOn: !s.audioOn })),
+  setVolume: (v) => {
+    const volume = Math.min(1, Math.max(0, v))
+    try {
+      localStorage.setItem(VOLUME_KEY, String(volume))
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn localStorage */
+    }
+    // Kéo thanh âm lượng lên khi đang tắt tiếng thì bật lại luôn
+    set((s) => ({ volume, audioOn: volume > 0 ? true : s.audioOn }))
+  },
   resetCamera: () => set({ cameraResetAt: Date.now() }),
 }))
 

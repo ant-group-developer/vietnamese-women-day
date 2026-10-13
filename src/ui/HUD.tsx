@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { nextStationIndex, useJourney } from '../store/useJourney'
+import { SettingsIcon } from './icons'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
@@ -9,11 +10,10 @@ export function HUD() {
   const targetIndex = useJourney((s) => s.targetIndex)
   const openedIndex = useJourney((s) => s.openedIndex)
   const currentIndex = useJourney((s) => s.currentIndex)
-  const audioOn = useJourney((s) => s.audioOn)
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
   const lastVisitedIndex = useJourney((s) => s.lastVisitedIndex)
   const tutorialOpen = useJourney((s) => s.tutorialOpen)
-  const { goTo, openGift, toggleAudio, openSettings } = useJourney.getState()
+  const { goTo, openGift, openSettings } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
   const [flowerToast, setFlowerToast] = useState<string | null>(null)
@@ -76,11 +76,8 @@ export function HUD() {
           </div>
         </motion.div>
         <div className="hud-actions">
-          <button className="icon-btn" onClick={openSettings} title="Cài đặt: đổi nhân vật">
-            ⚙️
-          </button>
-          <button className={`icon-btn ${audioOn ? '' : 'off'}`} onClick={toggleAudio} title="Bật/tắt âm thanh">
-            {audioOn ? '🔊' : '🔇'}
+          <button className="icon-btn" onClick={openSettings} title="Cài đặt: nhân vật, âm lượng" aria-label="Cài đặt">
+            <SettingsIcon />
           </button>
         </div>
       </div>

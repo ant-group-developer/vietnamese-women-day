@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { motion } from 'framer-motion'
 import { siteData } from '../data/siteData'
 import { youtubeEmbed } from '../utils/youtube'
@@ -7,6 +7,9 @@ import { startBgm, stopBgm } from '../audio/sound'
 
 export function GiftVideo() {
   const finishVideo = useJourney((s) => s.finishVideo)
+  const volume = useJourney((s) => s.volume)
+  const audioOn = useJourney((s) => s.audioOn)
+  const videoRef = useRef<HTMLVideoElement>(null)
   const { video } = siteData
   const [error, setError] = useState(!video.src)
   // Tỉ lệ khung theo video gốc (rộng / cao); YouTube Shorts mặc định dọc
@@ -20,6 +23,14 @@ export function GiftVideo() {
       if (useJourney.getState().audioOn) startBgm()
     }
   }, [])
+
+  // Video dùng chung âm lượng tổng với cả trang
+  useEffect(() => {
+    const v = videoRef.current
+    if (!v) return
+    v.volume = volume
+    v.muted = !audioOn
+  }, [volume, audioOn, error])
 
   return (
     <motion.div className="video-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -54,6 +65,7 @@ export function GiftVideo() {
             </div>
           ) : (
             <video
+              ref={videoRef}
               src={video.src}
               autoPlay
               playsInline

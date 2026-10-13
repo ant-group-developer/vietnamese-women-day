@@ -2,12 +2,16 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CHARACTER_LIST } from '../scene/characters'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
+import { VolumeIcon } from './icons'
 
-/** Hộp cài đặt: chọn nhân vật dẫn đường. */
+/** Hộp cài đặt: chọn nhân vật dẫn đường và chỉnh âm lượng. */
 export function SettingsModal() {
   const open = useJourney((s) => s.settingsOpen)
   const current = useJourney((s) => s.character)
-  const { setCharacter, closeSettings } = useJourney.getState()
+  const volume = useJourney((s) => s.volume)
+  const audioOn = useJourney((s) => s.audioOn)
+  const { setCharacter, closeSettings, setVolume, toggleAudio } = useJourney.getState()
+  const shown = audioOn ? volume : 0
 
   return (
     <AnimatePresence>
@@ -51,6 +55,28 @@ export function SettingsModal() {
                   {current === c.id && <span className="character-check">✓</span>}
                 </motion.button>
               ))}
+            </div>
+            <div className="volume-row">
+              <button
+                type="button"
+                className="volume-icon"
+                onClick={toggleAudio}
+                aria-label={audioOn ? 'Tắt âm thanh' : 'Bật âm thanh'}
+              >
+                <VolumeIcon level={shown} />
+              </button>
+              <input
+                type="range"
+                className="volume-slider"
+                min={0}
+                max={100}
+                step={1}
+                value={Math.round(shown * 100)}
+                style={{ ['--p' as string]: `${shown * 100}%` }}
+                onChange={(e) => setVolume(Number(e.target.value) / 100)}
+                aria-label="Âm lượng"
+              />
+              <span className="volume-value">{Math.round(shown * 100)}%</span>
             </div>
             <button className="btn" onClick={closeSettings}>
               Xong 💕

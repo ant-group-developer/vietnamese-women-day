@@ -109,14 +109,17 @@ export function stopBgm() {
   bgm?.pause()
 }
 
-/** Đồng bộ trạng thái bật/tắt audio từ store. */
+/** Đồng bộ trạng thái bật/tắt audio và âm lượng tổng từ store. */
 export function bindAudioToStore() {
   const apply = (on: boolean) => {
     Howler.mute(!on)
     if (on) startBgm()
   }
-  apply(useJourney.getState().audioOn)
+  const { audioOn, volume } = useJourney.getState()
+  Howler.volume(volume)
+  apply(audioOn)
   return useJourney.subscribe((s, prev) => {
+    if (s.volume !== prev.volume) Howler.volume(s.volume)
     if (s.audioOn !== prev.audioOn) apply(s.audioOn)
   })
 }

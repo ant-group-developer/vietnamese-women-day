@@ -86,13 +86,16 @@ button {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 6px 18px rgba(240, 85, 138, 0.18);
-  font-size: 20px;
+  border: 2px solid var(--pink-100);
+  color: var(--pink-500);
+  font-size: 22px;
   display: grid;
   place-items: center;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
   pointer-events: auto;
 }
-.icon-btn:hover { transform: scale(1.08); }
+.icon-btn:hover { transform: scale(1.08); background: var(--pink-500); border-color: var(--pink-500); color: #fff; }
+.icon-btn:active { transform: scale(0.94); }
 .icon-btn.off { opacity: 0.55; }
 .icon-btn.active { background: var(--pink-200); }
 
@@ -323,7 +326,6 @@ button {
   grid-template-columns: repeat(2, 44px);
   gap: 8px;
 }
-.cam-controls .icon-btn { font-size: 18px; }
 
 /* ---------- Tutorial ---------- */
 .tutorial-backdrop { z-index: 32; }
@@ -378,6 +380,45 @@ button {
 .settings-card h2 { margin: 0 0 4px; font-size: 26px; color: var(--pink-500); }
 .settings-sub { margin: 0 0 16px; opacity: 0.75; font-size: 15px; }
 .settings-close { background: var(--pink-200); color: var(--pink-500); }
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(240, 85, 138, 0.12);
+}
+.volume-icon { font-size: 26px; line-height: 0; width: 32px; flex: none; color: var(--pink-500); }
+.volume-value { width: 44px; flex: none; font-weight: 800; color: var(--pink-500); text-align: right; }
+.volume-slider {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: linear-gradient(90deg, var(--pink-400), var(--pink-500)) 0 / var(--p, 100%) 100% no-repeat, var(--pink-100);
+  cursor: pointer;
+}
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--pink-500);
+  box-shadow: 0 2px 6px rgba(240, 85, 138, 0.35);
+}
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--pink-500);
+  box-shadow: 0 2px 6px rgba(240, 85, 138, 0.35);
+}
 .character-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -456,9 +497,7 @@ button {
   transform: translateY(-50%);
   width: 52px;
   height: 52px;
-  font-size: 32px;
-  line-height: 1;
-  padding-bottom: 4px;
+  font-size: 28px;
   background: rgba(255, 255, 255, 0.92);
 }
 .lightbox-nav.prev { left: max(12px, env(safe-area-inset-left)); }
@@ -467,7 +506,7 @@ button {
 @media (max-width: 600px) {
   .lightbox { padding: 16px; }
   .lightbox img { max-width: calc(100vw - 32px); max-height: 70vh; }
-  .lightbox-nav { width: 44px; height: 44px; font-size: 28px; background: rgba(255, 255, 255, 0.8); }
+  .lightbox-nav { width: 44px; height: 44px; font-size: 24px; background: rgba(255, 255, 255, 0.8); }
   .lightbox-nav.prev { left: 6px; }
   .lightbox-nav.next { right: 6px; }
 }
@@ -717,7 +756,7 @@ button {
     transform: translateX(50%);
     bottom: calc(max(20px, env(safe-area-inset-bottom)) + 64px);
   }
-  .cam-controls .icon-btn { width: 38px; height: 38px; font-size: 15px; }
+  .cam-controls .icon-btn { width: 38px; height: 38px; font-size: 19px; }
   .hud-bottom { padding: 0 16px; }
   .hud-bottom .btn { max-width: 100%; justify-content: center; text-align: center; line-height: 1.15; }
   .hud-toast { font-size: 14px; top: 76px; }

@@ -4,6 +4,7 @@ import { departments, fallbackAvatar, type Member } from '../data/departments'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
 import { shade } from '../scene/utils'
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from './icons'
 
 function photoSrc(m: Member) {
   return m.photo || fallbackAvatar(m.name)
@@ -121,7 +122,7 @@ function Lightbox({ members, index, onNavigate, onClose }: LightboxProps) {
                   go(-1)
                 }}
               >
-                ‹
+                <ChevronLeftIcon />
               </button>
               <button
                 className="icon-btn lightbox-nav next"
@@ -131,12 +132,12 @@ function Lightbox({ members, index, onNavigate, onClose }: LightboxProps) {
                   go(1)
                 }}
               >
-                ›
+                <ChevronRightIcon />
               </button>
             </>
           )}
           <button className="icon-btn lightbox-close" onClick={onClose} aria-label="Đóng">
-            ✕
+            <CloseIcon />
           </button>
         </motion.div>
       )}
