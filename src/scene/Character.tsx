@@ -1,66 +1,116 @@
-import { useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useJourney } from '../store/useJourney'
 import { layout, mascot, stationT } from './path'
 import { playStep } from '../audio/sound'
-import { CHARACTERS, type CharacterSpec } from './characters'
+import { CHARACTER_LIST, CHARACTERS, type CharacterSpec } from './characters'
 
 const SPEED = 4.2 // đơn vị/giây
+const FADE = 0.25
 
 const tmpDir = new THREE.Vector3()
 const tmpLook = new THREE.Vector3()
 
-type Ref<T> = React.RefObject<T | null>
+// Tải trước cả 3 model để đổi nhân vật không bị khựng.
+CHARACTER_LIST.forEach((c) => useGLTF.preload(c.model))
 
-function Limb({
-  r,
-  position,
-  length,
-  color,
-  foot,
-  flatFoot,
-  swing,
-}: {
-  r: Ref<THREE.Group>
-  position: [number, number, number]
-  length: number
-  color: string
-  foot?: string
-  flatFoot?: boolean
-  swing?: number
-}) {
+/** Model GLB có animation: Idle khi đứng, Run khi di chuyển, Trick khi tới nơi. */
+function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkingRef: React.RefObject<boolean>; arrivedAt: React.RefObject<number> }) {
+  const group = useRef<THREE.Group>(null)
+  const gltf = useGLTF(spec.model)
+  const { actions, mixer } = useAnimations(gltf.animations, group)
+  const current = useRef<string>('')
+  const lastArrive = useRef(0)
+
+  // Texture pixel-art 64x64: lọc Nearest cho nét, bật bóng đổ.
+  useEffect(() => {
+    gltf.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh) return
+      mesh.castShadow = true
+      mesh.frustumCulled = false
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      mats.forEach((m) => {
+        const std = m as THREE.MeshStandardMaterial
+        for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'] as const) {
+          const tex = std[key]
+          if (tex) {
+            tex.magFilter = THREE.NearestFilter
+            tex.minFilter = THREE.NearestFilter
+            tex.generateMipmaps = false
+            tex.needsUpdate = true
+          }
+        }
+      })
+    })
+  }, [gltf])
+
+  const play = (name: string, once = false) => {
+    const next = actions[name]
+    if (!next || current.current === name) return
+    const prev = actions[current.current]
+    next.reset()
+    next.enabled = true
+    if (once) {
+      next.setLoop(THREE.LoopOnce, 1)
+      next.clampWhenFinished = true
+    } else {
+      next.setLoop(THREE.LoopRepeat, Infinity)
+    }
+    if (prev) next.crossFadeFrom(prev, FADE, true)
+    next.play()
+    current.current = name
+  }
+
+  useEffect(() => {
+    current.current = ''
+    play('Idle')
+    const onFinished = () => {
+      if (current.current === 'Trick' || current.current === 'Jump') play('Idle')
+    }
+    mixer.addEventListener('finished', onFinished)
+    return () => {
+      mixer.removeEventListener('finished', onFinished)
+      mixer.stopAllAction()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actions, mixer])
+
+  useFrame(() => {
+    const run = actions.Run
+    if (walkingRef.current) {
+      if (current.current !== 'Run') play('Run')
+      // Khớp tốc độ clip với tốc độ di chuyển để chân không trượt.
+      if (run) run.timeScale = SPEED / (spec.runSpeed * spec.scale)
+    } else if (current.current === 'Run') {
+      play('Idle')
+    }
+    if (arrivedAt.current !== lastArrive.current) {
+      lastArrive.current = arrivedAt.current
+      if (arrivedAt.current > 0) play('Trick', true)
+    }
+  })
+
   return (
-    <group ref={r} position={position} rotation={[0, 0, swing ?? 0]}>
-      <mesh position={[0, -length / 2, 0]} castShadow>
-        <capsuleGeometry args={[0.095, length - 0.19, 6, 12]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-      {foot && (
-        <mesh position={[0, -length, flatFoot ? 0.08 : 0.04]} scale={flatFoot ? [1.5, 0.4, 1.9] : [1, 0.7, 1.3]} castShadow>
-          <sphereGeometry args={[0.14, 16, 12]} />
-          <meshStandardMaterial color={foot} />
-        </mesh>
-      )}
+    <group ref={group} scale={spec.scale}>
+      <primitive object={gltf.scene} />
     </group>
   )
 }
 
-/** Nhân vật 2 chân đi theo đường cong; ngoại hình lấy từ CHARACTERS theo lựa chọn trong store. */
+/** Nhân vật đi theo đường cong; ngoại hình lấy từ CHARACTERS theo lựa chọn trong store. */
 export function Character() {
   const characterId = useJourney((s) => s.character)
-  const spec: CharacterSpec = CHARACTERS[characterId]
-  const limbColor = spec.limb ?? spec.body
+  const spec = CHARACTERS[characterId]
 
   const root = useRef<THREE.Group>(null)
-  const body = useRef<THREE.Group>(null)
-  const head = useRef<THREE.Group>(null)
   const shadow = useRef<THREE.Mesh>(null)
-  const legL = useRef<THREE.Group>(null)
-  const legR = useRef<THREE.Group>(null)
-  const armL = useRef<THREE.Group>(null)
-  const armR = useRef<THREE.Group>(null)
   const heading = useRef(new THREE.Vector3(1, 0, 0))
+  const walkingRef = useRef(false)
+  const arrivedAt = useRef(0)
+  const shadowRadius = useMemo(() => 0.3 * spec.scale, [spec])
 
   useFrame(({ clock }, dt) => {
     const time = clock.elapsedTime
@@ -74,6 +124,7 @@ export function Character() {
       const diff = target - mascot.t
       if (Math.abs(diff) <= step) {
         mascot.t = target
+        arrivedAt.current = time
         arrive(targetIndex!)
       } else {
         mascot.t += Math.sign(diff) * step
@@ -85,87 +136,23 @@ export function Character() {
       }
     }
     mascot.walking = walking
+    walkingRef.current = walking
     layout.curve.getPointAt(THREE.MathUtils.clamp(mascot.t, 0, 1), mascot.pos)
 
-    if (!root.current || !body.current) return
+    if (!root.current) return
     root.current.position.copy(mascot.pos)
     tmpLook.copy(mascot.pos).add(heading.current)
     root.current.lookAt(tmpLook)
-
-    const gait = time * 11
-    const swing = walking ? Math.sin(gait) : 0
-    const sway = spec.waddle ? 0.12 : 0.04
-    // Nhún theo bước chân, thở nhẹ khi đứng
-    const bounce = walking ? Math.abs(Math.cos(gait)) * 0.07 : Math.sin(time * 2) * 0.015
-    body.current.position.y = bounce
-    body.current.rotation.z = walking ? Math.sin(gait) * sway : 0
-    body.current.rotation.x = walking ? -0.06 : 0
-    if (shadow.current) {
-      const s = 1 - bounce * 0.6
-      shadow.current.scale.set(s, s, 1)
-    }
-    // Chân trước/sau so le, tay vung ngược chiều chân
-    if (legL.current) legL.current.rotation.x = swing * 0.75
-    if (legR.current) legR.current.rotation.x = -swing * 0.75
-    if (armL.current) armL.current.rotation.x = -swing * 0.55
-    if (armR.current) armR.current.rotation.x = swing * 0.55
-    if (head.current) {
-      head.current.rotation.z = walking ? Math.sin(gait * 0.5) * 0.05 : Math.sin(time * 1.4) * 0.05
-      head.current.rotation.y = walking ? 0 : Math.sin(time * 0.9) * 0.08
-    }
   })
 
   return (
     <group ref={root}>
       {/* Bóng đổ mềm dưới chân */}
       <mesh ref={shadow} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.55, 24]} />
+        <circleGeometry args={[shadowRadius, 24]} />
         <meshBasicMaterial color="#5a2d44" transparent opacity={0.16} depthWrite={false} />
       </mesh>
-
-      <group ref={body} key={spec.id}>
-        {/* Chân */}
-        <Limb r={legL} position={[-0.16, 0.5, 0]} length={0.42} color={limbColor} foot={spec.shoe} flatFoot={spec.flatFeet} />
-        <Limb r={legR} position={[0.16, 0.5, 0]} length={0.42} color={limbColor} foot={spec.shoe} flatFoot={spec.flatFeet} />
-
-        {/* Váy */}
-        <mesh position={[0, 0.72, 0]} castShadow>
-          <cylinderGeometry args={[0.26, 0.46, 0.5, 32]} />
-          <meshStandardMaterial color={spec.dress} />
-        </mesh>
-        <mesh position={[0, 0.48, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.45, 0.035, 10, 40]} />
-          <meshStandardMaterial color={spec.dressDark} />
-        </mesh>
-        {/* Thân trên */}
-        <mesh position={[0, 0.98, 0]} castShadow>
-          <sphereGeometry args={[0.3, 24, 18]} />
-          <meshStandardMaterial color={spec.body} />
-        </mesh>
-        {/* Yếm */}
-        <mesh position={[0, 0.95, 0.22]} scale={[1, 1.1, 0.4]}>
-          <sphereGeometry args={[0.2, 20, 16]} />
-          <meshStandardMaterial color={spec.dress} />
-        </mesh>
-        {/* Cổ áo */}
-        <mesh position={[0, 1.18, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.2, 0.05, 10, 32]} />
-          <meshStandardMaterial color="#ffffff" />
-        </mesh>
-
-        {/* Tay */}
-        <Limb r={armL} position={[-0.36, 1.05, 0]} length={0.36} color={limbColor} swing={0.35} />
-        <Limb r={armR} position={[0.36, 1.05, 0]} length={0.36} color={limbColor} swing={-0.35} />
-
-        {/* Đầu */}
-        <group ref={head} position={[0, 1.55, 0.02]}>
-          <mesh scale={spec.headScale} castShadow>
-            <sphereGeometry args={[0.52, 40, 28]} />
-            <meshStandardMaterial color={spec.body} />
-          </mesh>
-          {spec.head}
-        </group>
-      </group>
+      <PetModel key={spec.id} spec={spec} walkingRef={walkingRef} arrivedAt={arrivedAt} />
     </group>
   )
 }

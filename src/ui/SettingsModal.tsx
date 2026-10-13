@@ -38,7 +38,7 @@ export function SettingsModal() {
                   key={c.id}
                   type="button"
                   className={`character-card ${current === c.id ? 'selected' : ''}`}
-                  style={{ ['--c' as string]: c.dress }}
+                  style={{ ['--c' as string]: c.color }}
                   onClick={() => {
                     playSfx('pop')
                     setCharacter(c.id)

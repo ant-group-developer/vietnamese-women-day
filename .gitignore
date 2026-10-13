@@ -29,3 +29,6 @@ raw-photos
 # Công cụ local
 .claude
 *.tsbuildinfo
+
+# Bộ model gốc (Cube Pets): giấy phép không cho chia sẻ lại file gốc; chỉ giữ GLB cần dùng trong public/models
+assets
