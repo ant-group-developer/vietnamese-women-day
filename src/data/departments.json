@@ -1,0 +1,163 @@
+{
+  "departments": [
+    {
+      "slug": "ke-toan",
+      "name": "Phòng Kế toán",
+      "color": "#ffb347",
+      "icon": "💰",
+      "message": "Tỉ mỉ từng con số, giữ cho công ty luôn vững vàng.",
+      "members": [
+        {
+          "name": "Hồ Thục Anh",
+          "photo": "/images/ke-toan/ho-thuc-anh.jpg"
+        },
+        {
+          "name": "Lê Thu Trang",
+          "photo": "/images/ke-toan/le-thu-trang.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "hcns",
+      "name": "Phòng Hành chính Nhân sự",
+      "color": "#8ed6ff",
+      "icon": "🤝",
+      "message": "Người giữ lửa, chăm lo cho từng thành viên trong đại gia đình ANT.",
+      "members": [
+        {
+          "name": "Nguyễn Thị Hường",
+          "photo": "/images/hcns/nguyen-thi-huong.jpg"
+        },
+        {
+          "name": "Nguyễn Thị Hảo",
+          "photo": "/images/hcns/nguyen-thi-hao.jpg"
+        },
+        {
+          "name": "Ngô Thị Khánh Hoà",
+          "photo": "/images/hcns/ngo-thi-khanh-hoa.jpg"
+        },
+        {
+          "name": "Phan Đoàn Châu Anh",
+          "photo": "/images/hcns/phan-doan-chau-anh.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "phong-am2",
+      "name": "Phòng AM2",
+      "color": "#ff8c69",
+      "icon": "🚀",
+      "message": "Những chiến binh luôn hết mình vì khách hàng.",
+      "members": [
+        {
+          "name": "Bùi Ngọc Anh",
+          "photo": "/images/phong-am2/bui-ngoc-anh.jpg"
+        },
+        {
+          "name": "Hiền Lan",
+          "photo": "/images/phong-am2/hien-lan.jpg"
+        },
+        {
+          "name": "Nguyễn Lan Phương",
+          "photo": "/images/phong-am2/nguyen-lan-phuong.jpg"
+        },
+        {
+          "name": "Trần Thị Linh",
+          "photo": "/images/phong-am2/tran-thi-linh.jpg"
+        },
+        {
+          "name": "Tuyết Mai",
+          "photo": "/images/phong-am2/tuyet-mai.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "phong-am3",
+      "name": "Phòng AM3",
+      "color": "#c77dff",
+      "icon": "🌟",
+      "message": "Năng lượng tràn đầy, chinh phục mọi mục tiêu.",
+      "members": [
+        {
+          "name": "Lưu An Lành",
+          "photo": "/images/phong-am3/luu-an-lanh.jpg"
+        },
+        {
+          "name": "Lưu Thúy Anh",
+          "photo": "/images/phong-am3/luu-thuy-anh.jpg"
+        },
+        {
+          "name": "Nguyễn Bích Ngọc",
+          "photo": "/images/phong-am3/nguyen-bich-ngoc.jpg"
+        },
+        {
+          "name": "Nguyễn Quỳnh Nhung",
+          "photo": "/images/phong-am3/nguyen-quynh-nhung.jpg"
+        },
+        {
+          "name": "Phạm Diệu Anh",
+          "photo": "/images/phong-am3/pham-dieu-anh.jpg"
+        },
+        {
+          "name": "Phạm Diệu Vi",
+          "photo": "/images/phong-am3/pham-dieu-vi.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "phong-ip",
+      "name": "Phòng IP",
+      "color": "#5ed6b0",
+      "icon": "💡",
+      "message": "Sáng tạo không giới hạn, bảo vệ từng ý tưởng.",
+      "members": [
+        {
+          "name": "Lê Thị Vân",
+          "photo": "/images/phong-ip/le-thi-van.jpg"
+        },
+        {
+          "name": "Vũ Thị Tuyết Trinh",
+          "photo": "/images/phong-ip/vu-thi-tuyet-trinh.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "phong-ql-ph",
+      "name": "Phòng QL&PH",
+      "color": "#ffd166",
+      "icon": "📋",
+      "message": "Hậu phương vững chắc, mọi việc đều đâu vào đấy.",
+      "members": [
+        {
+          "name": "Nguyễn Thị Loan",
+          "photo": "/images/phong-ql-ph/nguyen-thi-loan.jpg"
+        },
+        {
+          "name": "Vũ Thị Hải Lý",
+          "photo": "/images/phong-ql-ph/vu-thi-hai-ly.jpg"
+        }
+      ]
+    },
+    {
+      "slug": "phong-sx",
+      "name": "Phòng Sản xuất",
+      "color": "#ff9fbf",
+      "icon": "🏭",
+      "message": "Bàn tay khéo léo tạo nên từng sản phẩm chất lượng.",
+      "members": [
+        {
+          "name": "Nguyễn Thị Gấm",
+          "photo": "/images/phong-sx/nguyen-thi-gam.jpg"
+        },
+        {
+          "name": "Đặng Hương Giang",
+          "photo": "/images/phong-sx/dang-huong-giang.jpg"
+        },
+        {
+          "name": "Đỗ Hồng Hạnh",
+          "photo": "/images/phong-sx/do-hong-hanh.jpg"
+        }
+      ]
+    }
+  ]
+}
