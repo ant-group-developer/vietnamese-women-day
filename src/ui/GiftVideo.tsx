@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { config } from '../config'
+import { siteData } from '../data/siteData'
+import { youtubeEmbed } from '../utils/youtube'
 import { useJourney } from '../store/useJourney'
 import { startBgm, stopBgm } from '../audio/sound'
 
-function youtubeEmbed(url: string): string {
-  const m = url.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{6,})/)
-  const id = m ? m[1] : url
-  return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&playsinline=1`
-}
-
 export function GiftVideo() {
   const finishVideo = useJourney((s) => s.finishVideo)
-  const [error, setError] = useState(false)
+  const { video } = siteData
+  const [error, setError] = useState(!video.src)
 
   useEffect(() => {
     stopBgm()
@@ -23,9 +19,9 @@ export function GiftVideo() {
 
   return (
     <motion.div className="video-layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      {config.video.type === 'youtube' ? (
+      {video.type === 'youtube' && video.src ? (
         <iframe
-          src={youtubeEmbed(config.video.src)}
+          src={youtubeEmbed(video.src)}
           title="Video quà 20/10"
           allow="autoplay; encrypted-media; fullscreen"
           allowFullScreen
@@ -33,14 +29,14 @@ export function GiftVideo() {
       ) : error ? (
         <div className="video-missing">
           <div style={{ fontSize: 56 }}>🎬</div>
-          <p>Chưa tìm thấy video. Hãy đặt file vào <code>public{config.video.src}</code>.</p>
+          <p>Chưa có video. Hãy thêm video ở trang cấu hình /admin.</p>
           <button className="btn" onClick={finishVideo}>
             Tiếp tục ➜
           </button>
         </div>
       ) : (
         <video
-          src={config.video.src}
+          src={video.src}
           autoPlay
           playsInline
           controls

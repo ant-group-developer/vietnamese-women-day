@@ -1,13 +1,14 @@
 import { Howl, Howler } from 'howler'
 import { config } from '../config'
+import { siteData } from '../data/siteData'
 import { useJourney } from '../store/useJourney'
 
-type SoundName = 'bgm' | 'step' | 'pop' | 'gift'
+type SfxName = 'step' | 'pop' | 'gift'
 
-const howls = new Map<SoundName, Howl>()
-const failed = new Set<SoundName>()
+const howls = new Map<SfxName, Howl>()
+const failed = new Set<SfxName>()
 
-function getHowl(name: SoundName): Howl | null {
+function getHowl(name: SfxName): Howl | null {
   if (failed.has(name)) return null
   let h = howls.get(name)
   if (h) return h
@@ -15,23 +16,18 @@ function getHowl(name: SoundName): Howl | null {
   if (!src) return null
   h = new Howl({
     src: [src],
-    loop: name === 'bgm',
-    volume: name === 'bgm' ? config.audio.bgmVolume : 0.6,
-    html5: name === 'bgm',
+    volume: 0.6,
     onloaderror: () => {
       // File không tồn tại hoặc lỗi: bỏ qua, không làm hỏng trải nghiệm.
       failed.add(name)
       howls.delete(name)
-    },
-    onplayerror: () => {
-      h?.once('unlock', () => h?.play())
     },
   })
   howls.set(name, h)
   return h
 }
 
-export function playSfx(name: Exclude<SoundName, 'bgm'>) {
+export function playSfx(name: SfxName) {
   if (!useJourney.getState().audioOn) return
   getHowl(name)?.play()
 }
@@ -43,14 +39,74 @@ export function playStep(now: number) {
   playSfx('step')
 }
 
+// ---- Nhạc nền: phát lần lượt danh sách bài (cấu hình ở /admin), hết bài thì quay lại đầu. ----
+
+let order: number[] = []
+let pos = 0
+let bgm: Howl | null = null
+/** Đang muốn phát nhạc (false khi tạm dừng cho video). */
+let wanted = false
+/** Số bài lỗi liên tiếp; lỗi hết cả danh sách thì thôi không thử nữa. */
+let failStreak = 0
+
+function buildOrder() {
+  const { tracks, shuffle } = siteData.music
+  order = tracks.map((_, i) => i)
+  if (shuffle) {
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[order[i], order[j]] = [order[j], order[i]]
+    }
+  }
+}
+
+function loadTrack(): Howl | null {
+  const { tracks, volume } = siteData.music
+  if (!tracks.length || failStreak >= tracks.length) return null
+  if (!order.length) buildOrder()
+  const single = tracks.length === 1
+  const h: Howl = new Howl({
+    src: [tracks[order[pos]].url],
+    html5: true,
+    loop: single,
+    volume,
+    onplay: () => {
+      failStreak = 0
+    },
+    onend: () => {
+      if (!single) nextTrack()
+    },
+    onloaderror: () => {
+      failStreak++
+      nextTrack()
+    },
+    onplayerror: () => {
+      h.once('unlock', () => {
+        if (bgm === h && wanted) h.play()
+      })
+    },
+  })
+  return h
+}
+
+function nextTrack() {
+  bgm?.unload()
+  bgm = null
+  pos = (pos + 1) % Math.max(order.length, 1)
+  if (pos === 0 && siteData.music.shuffle) buildOrder()
+  if (wanted) startBgm()
+}
+
 export function startBgm() {
-  const h = getHowl('bgm')
-  if (!h || h.playing()) return
-  h.play()
+  wanted = true
+  if (!bgm) bgm = loadTrack()
+  if (!bgm || bgm.playing()) return
+  bgm.play()
 }
 
 export function stopBgm() {
-  howls.get('bgm')?.pause()
+  wanted = false
+  bgm?.pause()
 }
 
 /** Đồng bộ trạng thái bật/tắt audio từ store. */

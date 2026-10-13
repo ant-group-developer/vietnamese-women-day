@@ -7,19 +7,13 @@ export const config = {
   subtitle: 'Hành trình thu thập hoa tặng các chị em 🌸',
   introHint: 'Bấm vào bất kỳ ngôi nhà nào để ghé thăm phòng ban. Kéo để xoay, cuộn hoặc chụm để zoom bản đồ.',
 
-  /** Video quà cuối hành trình. type: 'mp4' (file trong public/video) hoặc 'youtube' (link YouTube). */
-  video: {
-    type: 'mp4' as 'mp4' | 'youtube',
-    src: '/video/gift.mp4',
-  },
+  // Phòng ban, nhân viên, nhạc nền và video quà được cấu hình ở trang /admin (xem src/data/siteData.ts).
 
-  /** Âm thanh. Nếu file không tồn tại, website vẫn chạy bình thường (chỉ không có tiếng). */
+  /** Hiệu ứng âm thanh. Nếu file không tồn tại, website vẫn chạy bình thường (chỉ không có tiếng). */
   audio: {
-    bgm: '/audio/bgm.mp3',
     step: '/audio/step.mp3',
     pop: '/audio/pop.mp3',
     gift: '/audio/gift.mp3',
-    bgmVolume: 0.35,
   },
 
   outro: {

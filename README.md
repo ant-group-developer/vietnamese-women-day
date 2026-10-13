@@ -18,63 +18,41 @@ npm run dev
 
 Mở địa chỉ hiện trên terminal (thường là http://localhost:5173).
 
-## Điền dữ liệu thật
+## Trang cấu hình /admin
 
-### 1. Phòng ban và thành viên
+Phòng ban, nhân viên (kèm ảnh), danh sách nhạc nền và video quà được chỉnh ở **`/admin`** (vd: `https://ten-mien.vercel.app/admin`), lưu trên Vercel Blob. Bấm **Lưu** là trang chính dùng ngay ở lần tải tiếp theo, không cần deploy lại.
 
-Sửa file `src/data/departments.json`. Mỗi phòng ban gồm:
+### Cài đặt một lần trên Vercel
 
-| Trường | Ý nghĩa |
-|---|---|
-| `slug` | Tên không dấu, dùng làm tên thư mục ảnh (vd: `ke-toan`) |
-| `name` | Tên hiển thị |
-| `color` | Màu ngôi nhà (mã hex) |
-| `icon` | Emoji đại diện |
-| `message` | Lời chúc/giới thiệu ngắn |
-| `members` | Danh sách `{ name, title, photo }` |
+1. Project → **Storage** → Create **Blob** store (chọn *Public*) → Connect vào project. Vercel tự thêm biến `BLOB_READ_WRITE_TOKEN`.
+2. **Settings → Environment Variables** → thêm `ADMIN_PASSWORD` (mật khẩu vào trang admin).
+3. Redeploy.
 
-Số lượng phòng ban tuỳ ý, bản đồ tự dài ra theo số trạm.
+Chưa làm các bước trên thì trang chính vẫn chạy bằng dữ liệu mặc định trong `src/data/departments.json`.
 
-### 2. Ảnh
-
-**Cách nhanh (khuyên dùng):** gom ảnh vào một thư mục, mỗi thư mục con là một phòng ban, mỗi file ảnh đặt tên theo tên người (jpg/png/heic đều được), rồi chạy:
+### Chạy /admin ở máy
 
 ```bash
-python scripts/import-photos.py raw-photos
+vercel env pull .env.local
+npm run dev
 ```
 
-Script sẽ resize ảnh về tối đa 800px, chuyển sang JPG vào `public/images/<slug>/` và sinh lại `src/data/departments.json` (tên phòng ban, màu, icon, lời chúc lấy từ bảng `DEPT_META` trong script). Cần cài `pip install pillow pillow-heif` một lần. Thư mục `raw-photos/` hiện chứa ảnh gốc và không được deploy.
+Rồi mở http://localhost:5173/admin. `npm run dev` tự chạy các API trong `api/` bằng biến trong `.env.local` (xem `.env.example`).
 
-**Cách thủ công:**
+### Ghi chú
 
-Đặt ảnh vào `public/images/<slug>/` và ghi đúng đường dẫn trong trường `photo` (vd: `/images/ke-toan/huong.jpg`). Ảnh vuông sẽ đẹp nhất. Nếu ảnh thiếu, web tự hiện avatar chữ cái đầu nên không bị lỗi.
+- Ảnh nhân viên được thu nhỏ về tối đa 800px ngay trên trình duyệt trước khi upload. Nút **Thêm nhiều từ ảnh** lấy tên file làm tên người.
+- Nhạc nền phát lần lượt theo danh sách, hết bài cuối thì quay lại đầu (có tuỳ chọn xáo bài).
+- Video quà: upload mp4 hoặc dán link YouTube.
+- Mỗi lần lưu tạo một file `config/site-<thời gian>.json` trên Blob, giữ lại 10 bản gần nhất.
 
-Dữ liệu mẫu đang dùng ảnh placeholder `.svg`. Để sinh lại placeholder cho thành viên mới có đường dẫn `.svg`:
+## Dữ liệu mặc định (khi chưa lưu gì trên /admin)
 
-```bash
-npm run placeholders
-```
+- Phòng ban: `src/data/departments.json` (có thể sinh bằng `python scripts/import-photos.py raw-photos`, ảnh nằm ở `public/images/<slug>/`).
+- Nhạc nền: `public/audio/bgm.mp3`. Video: `public/video/gift.mp4`.
+- Hiệu ứng âm thanh (luôn lấy từ `public/audio/`): `step.mp3`, `pop.mp3`, `gift.mp3`. Thiếu file nào thì bỏ qua.
 
-### 3. Video quà
-
-Đặt file vào `public/video/gift.mp4`. Nếu muốn dùng YouTube, mở `src/config.ts` và đổi:
-
-```ts
-video: { type: 'youtube', src: 'https://www.youtube.com/watch?v=XXXX' }
-```
-
-### 4. Nhạc nền và hiệu ứng (tuỳ chọn)
-
-Đặt vào `public/audio/`:
-
-- `bgm.mp3` – nhạc nền (lặp)
-- `step.mp3` – tiếng bước chân
-- `pop.mp3` – tiếng nhận hoa
-- `gift.mp3` – tiếng mở quà
-
-Thiếu file nào thì web bỏ qua file đó, không báo lỗi.
-
-### 5. Tiêu đề, tên công ty, lời chúc cuối
+## Tiêu đề, tên công ty, lời chúc cuối
 
 Tất cả nằm trong `src/config.ts`.
 
@@ -84,7 +62,7 @@ Tất cả nằm trong `src/config.ts`.
 npm run build
 ```
 
-Thư mục `dist/` là website tĩnh, đưa lên Vercel, Netlify, GitHub Pages hoặc bất kỳ web server nào. Nếu deploy vào thư mục con (vd: `https://ten-mien.com/20-10/`), thêm `base: '/20-10/'` vào `vite.config.ts`.
+Deploy lên Vercel (cần Vercel cho `api/` và Blob). Push lên nhánh chính là Vercel tự build.
 
 Xem thử bản build:
 
@@ -97,9 +75,13 @@ npm run preview
 ```
 src/
   config.ts              cấu hình chung
-  data/departments.json  dữ liệu phòng ban
+  data/departments.json  dữ liệu phòng ban mặc định
+  data/siteSchema.ts     kiểu dữ liệu + kiểm tra cấu hình (dùng chung web, admin, API)
+  data/siteData.ts       dữ liệu mặc định + tải cấu hình từ /api/config
+  admin/                 trang cấu hình /admin
   store/useJourney.ts    trạng thái hành trình
   scene/                 các thành phần 3D (đảo, đường, trạm, mèo, hộp quà, camera)
   ui/                    intro, HUD, popup phòng ban, video, outro, cánh hoa rơi
-  audio/sound.ts         âm thanh
+  audio/sound.ts         âm thanh, playlist nhạc nền
+api/                     Vercel Functions: config (đọc/lưu), login, upload
 ```

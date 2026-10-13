@@ -1,21 +1,12 @@
-import raw from './departments.json'
+import { siteData } from './siteData'
 
-export interface Member {
-  name: string
-  title?: string
-  photo?: string
-}
+export type { Department, Member } from './siteSchema'
 
-export interface Department {
-  slug: string
-  name: string
-  color: string
-  icon: string
-  message: string
-  members: Member[]
-}
-
-export const departments: Department[] = raw.departments as Department[]
+/**
+ * Danh sách phòng ban lấy từ cấu hình đã tải (xem main.tsx).
+ * Module này chỉ được import sau khi main.tsx gọi setSiteData(), vì path.ts dựng bản đồ ngay lúc load.
+ */
+export const departments = siteData.departments
 
 /** Số trạm phòng ban (không tính hộp quà). */
 export const STATION_COUNT = departments.length
