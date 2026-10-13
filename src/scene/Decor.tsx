@@ -54,16 +54,16 @@ function Tree({ color }: { color: string }) {
   return (
     <group>
       <mesh position={[0, 0.35, 0]} castShadow>
-        <cylinderGeometry args={[0.12, 0.16, 0.7, 6]} />
-        <meshStandardMaterial color="#b8805c" flatShading />
+        <cylinderGeometry args={[0.12, 0.16, 0.7, 12]} />
+        <meshStandardMaterial color="#b8805c" />
       </mesh>
       <mesh position={[0, 1.0, 0]} castShadow>
-        <coneGeometry args={[0.7, 1.1, 6]} />
-        <meshStandardMaterial color={color} flatShading />
+        <coneGeometry args={[0.7, 1.1, 16]} />
+        <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[0, 1.6, 0]} castShadow>
-        <coneGeometry args={[0.5, 0.9, 6]} />
-        <meshStandardMaterial color={color} flatShading />
+        <coneGeometry args={[0.5, 0.9, 16]} />
+        <meshStandardMaterial color={color} />
       </mesh>
     </group>
   )
@@ -73,12 +73,12 @@ function Bush({ color }: { color: string }) {
   return (
     <group>
       <mesh position={[0, 0.35, 0]} castShadow>
-        <sphereGeometry args={[0.45, 7, 6]} />
-        <meshStandardMaterial color={color} flatShading />
+        <sphereGeometry args={[0.45, 20, 14]} />
+        <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[0.35, 0.28, 0.15]} castShadow>
-        <sphereGeometry args={[0.32, 7, 6]} />
-        <meshStandardMaterial color={color} flatShading />
+        <sphereGeometry args={[0.32, 20, 14]} />
+        <meshStandardMaterial color={color} />
       </mesh>
     </group>
   )
@@ -88,15 +88,15 @@ function Flower({ color }: { color: string }) {
   return (
     <group>
       <mesh position={[0, 0.25, 0]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.5, 4]} />
+        <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />
         <meshStandardMaterial color="#6cc58d" />
       </mesh>
       <mesh position={[0, 0.55, 0]} castShadow>
-        <sphereGeometry args={[0.18, 8, 8]} />
+        <sphereGeometry args={[0.18, 16, 12]} />
         <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[0, 0.58, 0.14]}>
-        <sphereGeometry args={[0.07, 6, 6]} />
+        <sphereGeometry args={[0.07, 12, 10]} />
         <meshStandardMaterial color="#ffd166" />
       </mesh>
     </group>
@@ -106,8 +106,8 @@ function Flower({ color }: { color: string }) {
 function Rock({ color }: { color: string }) {
   return (
     <mesh position={[0, 0.18, 0]} castShadow>
-      <dodecahedronGeometry args={[0.3, 0]} />
-      <meshStandardMaterial color={color} flatShading />
+      <dodecahedronGeometry args={[0.3, 1]} />
+      <meshStandardMaterial color={color} />
     </mesh>
   )
 }
@@ -116,11 +116,11 @@ function Mushroom({ color }: { color: string }) {
   return (
     <group>
       <mesh position={[0, 0.2, 0]}>
-        <cylinderGeometry args={[0.1, 0.13, 0.4, 6]} />
+        <cylinderGeometry args={[0.1, 0.13, 0.4, 12]} />
         <meshStandardMaterial color="#fff6e9" />
       </mesh>
       <mesh position={[0, 0.45, 0]} castShadow>
-        <sphereGeometry args={[0.28, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[0.28, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color={color} />
       </mesh>
       {[
@@ -128,7 +128,7 @@ function Mushroom({ color }: { color: string }) {
         [-0.14, 0.58, -0.08],
       ].map((p, i) => (
         <mesh key={i} position={p as [number, number, number]}>
-          <sphereGeometry args={[0.05, 6, 6]} />
+          <sphereGeometry args={[0.05, 10, 8]} />
           <meshStandardMaterial color="#ffffff" />
         </mesh>
       ))}
@@ -208,8 +208,8 @@ export function Clouds() {
         >
           {c.parts.map((p, j) => (
             <mesh key={j} position={[p[0], p[1], p[2]]}>
-              <sphereGeometry args={[p[3], 10, 8]} />
-              <meshStandardMaterial color="#ffffff" flatShading />
+              <sphereGeometry args={[p[3], 20, 14]} />
+              <meshStandardMaterial color="#ffffff" />
             </mesh>
           ))}
         </group>

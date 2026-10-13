@@ -82,7 +82,7 @@ export function Station({ index, dept }: Props) {
       >
         {/* Thân nhà */}
         <RoundedBox args={[1.7, 1.3, 1.5]} radius={0.12} smoothness={3} position={[0, 0.65, 0]} castShadow receiveShadow>
-          <meshStandardMaterial color={color} flatShading />
+          <meshStandardMaterial color={color} />
         </RoundedBox>
         {/* Mái nhà */}
         <mesh position={[0, 1.78, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
@@ -100,7 +100,7 @@ export function Station({ index, dept }: Props) {
           <meshStandardMaterial color="#fff6e9" />
         </mesh>
         <mesh position={[0.13, 0.42, 0.8]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
+          <sphereGeometry args={[0.04, 12, 10]} />
           <meshStandardMaterial color="#ffd166" />
         </mesh>
         {/* Cửa sổ */}
@@ -114,11 +114,11 @@ export function Station({ index, dept }: Props) {
         {status === 'visited' && (
           <group position={[-0.45, 2.1, 0.35]}>
             <mesh>
-              <sphereGeometry args={[0.22, 8, 8]} />
+              <sphereGeometry args={[0.22, 16, 12]} />
               <meshStandardMaterial color="#ff7aa8" />
             </mesh>
             <mesh position={[0, 0.02, 0.18]}>
-              <sphereGeometry args={[0.09, 8, 8]} />
+              <sphereGeometry args={[0.09, 12, 10]} />
               <meshStandardMaterial color="#ffd166" />
             </mesh>
           </group>
@@ -128,11 +128,11 @@ export function Station({ index, dept }: Props) {
           <Float speed={2.2} rotationIntensity={0.2} floatIntensity={0.8}>
             <group position={[0.9, 3.1, 0.2]}>
               <mesh castShadow>
-                <sphereGeometry args={[0.32, 12, 12]} />
+                <sphereGeometry args={[0.32, 24, 18]} />
                 <meshStandardMaterial color={shade(dept.color, 0.25)} />
               </mesh>
               <mesh position={[0, -0.6, 0]}>
-                <cylinderGeometry args={[0.012, 0.012, 0.7, 4]} />
+                <cylinderGeometry args={[0.012, 0.012, 0.7, 6]} />
                 <meshStandardMaterial color="#ffffff" />
               </mesh>
             </group>

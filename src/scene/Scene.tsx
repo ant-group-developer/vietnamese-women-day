@@ -19,7 +19,7 @@ export function Scene() {
   return (
     <div className="canvas-wrap">
       <Canvas
-        shadows={!isMobile}
+        shadows={isMobile ? false : { type: THREE.VSMShadowMap }}
         dpr={[1, isMobile ? 1.5 : 2]}
         camera={{
           position: [start.x + CAMERA_OFFSET.x, start.y + CAMERA_OFFSET.y, start.z + CAMERA_OFFSET.z],
@@ -30,14 +30,18 @@ export function Scene() {
         gl={{ antialias: true, alpha: true, toneMapping: THREE.NoToneMapping }}
       >
         <fog attach="fog" args={['#dceeff', 32, 75]} />
-        <ambientLight intensity={0.55} />
-        <hemisphereLight args={['#fff5f8', '#bfe8cf', 0.7]} />
+        <ambientLight intensity={0.5} />
+        <hemisphereLight args={['#fff5f8', '#bfe8cf', 0.9]} />
+        <directionalLight position={[-12, 8, -6]} intensity={0.35} color="#ffe3ef" />
         <directionalLight
           castShadow
           position={[10, 16, 8]}
-          intensity={1.6}
+          intensity={1.45}
           shadow-mapSize={[2048, 2048]}
-          shadow-bias={-0.0004}
+          shadow-radius={6}
+          shadow-blurSamples={12}
+          shadow-bias={-0.0002}
+          shadow-normalBias={0.02}
           shadow-camera-left={-24}
           shadow-camera-right={24}
           shadow-camera-top={24}

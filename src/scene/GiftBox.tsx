@@ -122,8 +122,8 @@ export function GiftBox() {
 
       {/* Bục đặt quà */}
       <mesh position={[0, 0.12, 0]} receiveShadow>
-        <cylinderGeometry args={[1.9, 2.1, 0.24, 24]} />
-        <meshStandardMaterial color={locked ? '#e4dfe2' : '#ffd6e7'} flatShading />
+        <cylinderGeometry args={[1.9, 2.1, 0.24, 48]} />
+        <meshStandardMaterial color={locked ? '#e4dfe2' : '#ffd6e7'} />
       </mesh>
 
       <group
@@ -174,14 +174,14 @@ export function GiftBox() {
               <group key={ry} rotation={[0, ry, 0]}>
                 {[-0.45, 0.45].map((x) => (
                   <mesh key={x} position={[x, 0.18, 0]} rotation={[0, 0, x > 0 ? 0.4 : -0.4]} scale={[1.2, 0.55, 0.5]} castShadow>
-                    <sphereGeometry args={[0.42, 10, 10]} />
+                    <sphereGeometry args={[0.42, 20, 14]} />
                     <meshStandardMaterial color={ribbon} />
                   </mesh>
                 ))}
               </group>
             ))}
             <mesh position={[0, 0.2, 0]}>
-              <sphereGeometry args={[0.22, 10, 10]} />
+              <sphereGeometry args={[0.22, 16, 12]} />
               <meshStandardMaterial color={locked ? '#aaa2a7' : '#ffb347'} />
             </mesh>
           </group>

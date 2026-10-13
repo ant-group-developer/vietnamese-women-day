@@ -47,7 +47,7 @@ export function PathMesh() {
       {/* Chấm tròn dọc đường cho vui mắt */}
       {dots.map((p, i) => (
         <mesh key={i} position={[p.x, 0.07, p.z]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[0.14, 10]} />
+          <circleGeometry args={[0.14, 20]} />
           <meshStandardMaterial color={i % 2 === 0 ? '#ffb3c6' : '#ffd166'} />
         </mesh>
       ))}
