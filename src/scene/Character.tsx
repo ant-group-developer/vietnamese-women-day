@@ -4,47 +4,30 @@ import * as THREE from 'three'
 import { useJourney } from '../store/useJourney'
 import { layout, mascot, stationT } from './path'
 import { playStep } from '../audio/sound'
+import { CHARACTERS, type CharacterSpec } from './characters'
 
 const SPEED = 4.2 // đơn vị/giây
-const WHITE = '#fffdfa'
-const DRESS = '#ff5c8a'
-const DRESS_DARK = '#e8457a'
-const BOW = '#ff2e5a'
-const NOSE = '#ffd166'
-const BLACK = '#2b1a24'
-const SHOE = '#ff7aa8'
 
 const tmpDir = new THREE.Vector3()
 const tmpLook = new THREE.Vector3()
 
 type Ref<T> = React.RefObject<T | null>
 
-function Whiskers({ side }: { side: 1 | -1 }) {
-  return (
-    <group position={[side * 0.46, -0.08, 0.34]}>
-      {[-0.1, 0, 0.1].map((y, i) => (
-        <mesh key={i} position={[side * 0.16, y, 0]} rotation={[0, 0, side * (i - 1) * -0.18]}>
-          <boxGeometry args={[0.36, 0.022, 0.022]} />
-          <meshStandardMaterial color={BLACK} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
 function Limb({
   r,
   position,
   length,
   color,
-  footColor,
+  foot,
+  flatFoot,
   swing,
 }: {
   r: Ref<THREE.Group>
   position: [number, number, number]
   length: number
   color: string
-  footColor?: string
+  foot?: string
+  flatFoot?: boolean
   swing?: number
 }) {
   return (
@@ -53,18 +36,22 @@ function Limb({
         <capsuleGeometry args={[0.095, length - 0.19, 6, 12]} />
         <meshStandardMaterial color={color} />
       </mesh>
-      {footColor && (
-        <mesh position={[0, -length, 0.04]} scale={[1, 0.7, 1.3]} castShadow>
+      {foot && (
+        <mesh position={[0, -length, flatFoot ? 0.08 : 0.04]} scale={flatFoot ? [1.5, 0.4, 1.9] : [1, 0.7, 1.3]} castShadow>
           <sphereGeometry args={[0.14, 16, 12]} />
-          <meshStandardMaterial color={footColor} />
+          <meshStandardMaterial color={foot} />
         </mesh>
       )}
     </group>
   )
 }
 
-/** Mèo trắng 2 chân kiểu Hello Kitty, đi theo đường cong, chân tay vung khi bước. */
+/** Nhân vật 2 chân đi theo đường cong; ngoại hình lấy từ CHARACTERS theo lựa chọn trong store. */
 export function Character() {
+  const characterId = useJourney((s) => s.character)
+  const spec: CharacterSpec = CHARACTERS[characterId]
+  const limbColor = spec.limb ?? spec.body
+
   const root = useRef<THREE.Group>(null)
   const body = useRef<THREE.Group>(null)
   const head = useRef<THREE.Group>(null)
@@ -107,10 +94,11 @@ export function Character() {
 
     const gait = time * 11
     const swing = walking ? Math.sin(gait) : 0
+    const sway = spec.waddle ? 0.12 : 0.04
     // Nhún theo bước chân, thở nhẹ khi đứng
     const bounce = walking ? Math.abs(Math.cos(gait)) * 0.07 : Math.sin(time * 2) * 0.015
     body.current.position.y = bounce
-    body.current.rotation.z = walking ? Math.sin(gait) * 0.04 : 0
+    body.current.rotation.z = walking ? Math.sin(gait) * sway : 0
     body.current.rotation.x = walking ? -0.06 : 0
     if (shadow.current) {
       const s = 1 - bounce * 0.6
@@ -135,87 +123,47 @@ export function Character() {
         <meshBasicMaterial color="#5a2d44" transparent opacity={0.16} depthWrite={false} />
       </mesh>
 
-      <group ref={body}>
+      <group ref={body} key={spec.id}>
         {/* Chân */}
-        <Limb r={legL} position={[-0.16, 0.5, 0]} length={0.42} color={WHITE} footColor={SHOE} />
-        <Limb r={legR} position={[0.16, 0.5, 0]} length={0.42} color={WHITE} footColor={SHOE} />
+        <Limb r={legL} position={[-0.16, 0.5, 0]} length={0.42} color={limbColor} foot={spec.shoe} flatFoot={spec.flatFeet} />
+        <Limb r={legR} position={[0.16, 0.5, 0]} length={0.42} color={limbColor} foot={spec.shoe} flatFoot={spec.flatFeet} />
 
         {/* Váy */}
         <mesh position={[0, 0.72, 0]} castShadow>
           <cylinderGeometry args={[0.26, 0.46, 0.5, 32]} />
-          <meshStandardMaterial color={DRESS} />
+          <meshStandardMaterial color={spec.dress} />
         </mesh>
         <mesh position={[0, 0.48, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.45, 0.035, 10, 40]} />
-          <meshStandardMaterial color={DRESS_DARK} />
+          <meshStandardMaterial color={spec.dressDark} />
         </mesh>
         {/* Thân trên */}
         <mesh position={[0, 0.98, 0]} castShadow>
           <sphereGeometry args={[0.3, 24, 18]} />
-          <meshStandardMaterial color={WHITE} />
+          <meshStandardMaterial color={spec.body} />
         </mesh>
         {/* Yếm */}
         <mesh position={[0, 0.95, 0.22]} scale={[1, 1.1, 0.4]}>
           <sphereGeometry args={[0.2, 20, 16]} />
-          <meshStandardMaterial color={DRESS} />
+          <meshStandardMaterial color={spec.dress} />
         </mesh>
         {/* Cổ áo */}
         <mesh position={[0, 1.18, 0]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.2, 0.05, 10, 32]} />
-          <meshStandardMaterial color={WHITE} />
+          <meshStandardMaterial color="#ffffff" />
         </mesh>
 
         {/* Tay */}
-        <Limb r={armL} position={[-0.36, 1.05, 0]} length={0.36} color={WHITE} swing={0.35} />
-        <Limb r={armR} position={[0.36, 1.05, 0]} length={0.36} color={WHITE} swing={-0.35} />
+        <Limb r={armL} position={[-0.36, 1.05, 0]} length={0.36} color={limbColor} swing={0.35} />
+        <Limb r={armR} position={[0.36, 1.05, 0]} length={0.36} color={limbColor} swing={-0.35} />
 
         {/* Đầu */}
         <group ref={head} position={[0, 1.55, 0.02]}>
-          <mesh scale={[1.15, 0.9, 0.95]} castShadow>
+          <mesh scale={spec.headScale} castShadow>
             <sphereGeometry args={[0.52, 40, 28]} />
-            <meshStandardMaterial color={WHITE} />
+            <meshStandardMaterial color={spec.body} />
           </mesh>
-          {/* Tai */}
-          {[-1, 1].map((s) => (
-            <mesh key={s} position={[s * 0.4, 0.42, 0]} rotation={[0, 0, s * -0.35]} castShadow>
-              <coneGeometry args={[0.19, 0.34, 20]} />
-              <meshStandardMaterial color={WHITE} />
-            </mesh>
-          ))}
-          {/* Mắt */}
-          {[-1, 1].map((s) => (
-            <mesh key={s} position={[s * 0.21, 0.02, 0.44]} scale={[0.7, 1.1, 0.5]}>
-              <sphereGeometry args={[0.065, 16, 12]} />
-              <meshStandardMaterial color={BLACK} />
-            </mesh>
-          ))}
-          {/* Mũi */}
-          <mesh position={[0, -0.12, 0.49]} scale={[1.3, 0.85, 0.6]}>
-            <sphereGeometry args={[0.055, 16, 12]} />
-            <meshStandardMaterial color={NOSE} />
-          </mesh>
-          {/* Má hồng */}
-          {[-1, 1].map((s) => (
-            <mesh key={s} position={[s * 0.36, -0.1, 0.38]} scale={[1, 0.6, 0.3]}>
-              <sphereGeometry args={[0.08, 16, 12]} />
-              <meshStandardMaterial color="#ffb3c6" transparent opacity={0.8} />
-            </mesh>
-          ))}
-          <Whiskers side={-1} />
-          <Whiskers side={1} />
-          {/* Nơ bên tai phải */}
-          <group position={[0.42, 0.3, 0.2]} rotation={[0.1, 0, -0.35]}>
-            {[-1, 1].map((s) => (
-              <mesh key={s} position={[s * 0.15, 0, 0]} rotation={[0, 0, s * 0.3]} scale={[1.2, 0.75, 0.5]} castShadow>
-                <sphereGeometry args={[0.15, 20, 14]} />
-                <meshStandardMaterial color={BOW} />
-              </mesh>
-            ))}
-            <mesh>
-              <sphereGeometry args={[0.075, 16, 12]} />
-              <meshStandardMaterial color={BOW} />
-            </mesh>
-          </group>
+          {spec.head}
         </group>
       </group>
     </group>

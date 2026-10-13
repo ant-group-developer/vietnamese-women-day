@@ -341,6 +341,62 @@ button {
 }
 .tutorial-check input { width: 18px; height: 18px; accent-color: var(--pink-500); }
 
+/* ---------- Settings ---------- */
+.settings-backdrop { z-index: 33; }
+.settings-card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--cream);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: 0 24px 64px rgba(90, 45, 68, 0.35);
+  text-align: center;
+}
+.settings-card h2 { margin: 0 0 4px; font-size: 26px; color: var(--pink-500); }
+.settings-sub { margin: 0 0 16px; opacity: 0.75; font-size: 15px; }
+.settings-close { background: var(--pink-200); color: var(--pink-500); }
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.character-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 14px 8px 12px;
+  border-radius: 20px;
+  background: #fff;
+  border: 3px solid transparent;
+  box-shadow: 0 6px 18px rgba(240, 85, 138, 0.12);
+  color: var(--text);
+  transition: border-color 0.2s, background 0.2s;
+}
+.character-card.selected {
+  border-color: var(--c, var(--pink-400));
+  background: color-mix(in srgb, var(--c, var(--pink-200)) 18%, #fff);
+}
+.character-emoji { font-size: 44px; line-height: 1; }
+.character-name { font-weight: 800; font-size: 14px; }
+.character-check {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--c, var(--pink-500));
+  color: #fff;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
 /* ---------- Lightbox ---------- */
 .lightbox {
   position: fixed;
@@ -575,6 +631,8 @@ button {
   .hud-bottom { padding: 0 16px; }
   .hud-bottom .btn { max-width: 100%; justify-content: center; text-align: center; line-height: 1.15; }
   .hud-toast { font-size: 14px; top: 76px; }
+  .character-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .character-emoji { font-size: 36px; }
   .modal-head h2 { font-size: 22px; }
   .station-label { font-size: 12px; padding: 5px 10px; }
 }

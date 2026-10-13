@@ -13,7 +13,7 @@ export function HUD() {
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
   const lastVisitedIndex = useJourney((s) => s.lastVisitedIndex)
   const tutorialOpen = useJourney((s) => s.tutorialOpen)
-  const { goTo, openGift, toggleAudio } = useJourney.getState()
+  const { goTo, openGift, toggleAudio, openSettings } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
   const [flowerToast, setFlowerToast] = useState<string | null>(null)
@@ -76,6 +76,9 @@ export function HUD() {
           </div>
         </motion.div>
         <div className="hud-actions">
+          <button className="icon-btn" onClick={openSettings} title="Cài đặt: đổi nhân vật">
+            ⚙️
+          </button>
           <button className={`icon-btn ${audioOn ? '' : 'off'}`} onClick={toggleAudio} title="Bật/tắt âm thanh">
             {audioOn ? '🔊' : '🔇'}
           </button>

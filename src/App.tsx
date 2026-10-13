@@ -10,6 +10,7 @@ import { GiftVideo } from './ui/GiftVideo'
 import { Outro } from './ui/Outro'
 import { Tutorial } from './ui/Tutorial'
 import { CameraControls } from './ui/CameraControls'
+import { SettingsModal } from './ui/SettingsModal'
 import { useJourney } from './store/useJourney'
 import { bindAudioToStore } from './audio/sound'
 
@@ -32,6 +33,7 @@ export default function App() {
       <CameraControls />
       <DepartmentModal />
       <Tutorial />
+      <SettingsModal />
       <AnimatePresence>
         {phase === 'video' && <GiftVideo key="video" />}
         {phase === 'outro' && <Outro key="outro" />}

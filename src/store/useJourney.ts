@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { mascot, stationT } from '../scene/path'
+import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
 export type Phase = 'intro' | 'journey' | 'gift' | 'opening' | 'video' | 'outro'
 
@@ -21,10 +22,17 @@ interface JourneyState {
   lastVisitedIndex: number
   /** Hộp hướng dẫn đang mở. */
   tutorialOpen: boolean
+  /** Hộp cài đặt đang mở. */
+  settingsOpen: boolean
+  /** Nhân vật dẫn đường đã chọn. */
+  character: CharacterId
 
   start: () => void
   openTutorial: () => void
   closeTutorial: (dontShowAgain: boolean) => void
+  openSettings: () => void
+  closeSettings: () => void
+  setCharacter: (id: CharacterId) => void
   goTo: (index: number) => void
   arrive: (index: number) => void
   closeModal: () => void
@@ -39,6 +47,15 @@ interface JourneyState {
 const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 
 const TUTORIAL_KEY = 'vn-woman-day:tutorial-seen'
+const CHARACTER_KEY = 'vn-woman-day:character'
+function savedCharacter(): CharacterId {
+  try {
+    const v = localStorage.getItem(CHARACTER_KEY)
+    return isCharacterId(v) ? v : DEFAULT_CHARACTER
+  } catch {
+    return DEFAULT_CHARACTER
+  }
+}
 function tutorialSeen(): boolean {
   try {
     return localStorage.getItem(TUTORIAL_KEY) === '1'
@@ -58,6 +75,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
   lastFlowerAt: 0,
   lastVisitedIndex: -1,
   tutorialOpen: false,
+  settingsOpen: false,
+  character: savedCharacter(),
 
   start: () => set({ phase: 'journey', tutorialOpen: !tutorialSeen() }),
   openTutorial: () => set({ tutorialOpen: true }),
@@ -71,10 +90,20 @@ export const useJourney = create<JourneyState>((set, get) => ({
     }
     set({ tutorialOpen: false })
   },
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
+  setCharacter: (id) => {
+    try {
+      localStorage.setItem(CHARACTER_KEY, id)
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn localStorage */
+    }
+    set({ character: id })
+  },
 
   goTo: (index) => {
-    const { openedIndex, phase, targetIndex, currentIndex, tutorialOpen } = get()
-    if (openedIndex !== null || tutorialOpen) return
+    const { openedIndex, phase, targetIndex, currentIndex, tutorialOpen, settingsOpen } = get()
+    if (openedIndex !== null || tutorialOpen || settingsOpen) return
     if (phase !== 'journey' && phase !== 'gift') return
     if (!isStationAvailable(get(), index)) return
     if (targetIndex === null && index === currentIndex) {

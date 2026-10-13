@@ -6,6 +6,7 @@ Website 3D vui nhộn: chú mèo nhỏ dẫn người xem đi qua từng phòng 
 - Kéo chuột/ngón tay để xoay bản đồ, cuộn chuột hoặc chụm hai ngón để zoom. Nút 🎯 đưa camera về sau nhân vật.
 - Nút "Đi tiếp" gợi ý phòng ban chưa thăm gần nhất. Thăm đủ mọi phòng thì hộp quà mở khoá.
 - Cụm nút góc phải dưới: phóng to, thu nhỏ, xoay trái/phải, về nhân vật, mở lại hướng dẫn. Hướng dẫn hiện lần đầu vào; tích "Không hiển thị lại" thì lưu trong localStorage của trình duyệt.
+- Nút ⚙️ góc phải trên mở cài đặt chọn nhân vật dẫn đường: gấu trúc, vịt vàng, thỏ, gấu, mèo. Lựa chọn lưu trong localStorage. Thêm nhân vật mới bằng cách bổ sung vào `src/scene/characters.tsx`.
 - Trong thiệp phòng ban, bấm vào ảnh để xem lớn. Video quà giữ nguyên tỉ lệ gốc (ngang hay dọc đều không bị cắt).
 
 ## Chạy thử
