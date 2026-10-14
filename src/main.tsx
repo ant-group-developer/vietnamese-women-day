@@ -3,10 +3,12 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { fetchSiteData, setSiteData } from './data/siteData'
+import { initGA } from './utils/ga'
 
 // Tải cấu hình (phòng ban, nhạc, video) TRƯỚC khi import App: bản đồ 3D được dựng ngay lúc module load
 // dựa trên số phòng ban. Lỗi/timeout thì giữ dữ liệu mặc định.
 async function boot() {
+  initGA()
   const data = await fetchSiteData()
   if (data) setSiteData(data)
   const { default: App } = await import('./App')
