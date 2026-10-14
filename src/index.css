@@ -822,24 +822,74 @@ button {
   .video-frame { width: min(960px, 100%, calc((100dvh - 110px) * var(--ar, 16 / 9) + 48px)); }
 }
 
-/* Màn hình lớn: nới rộng bảng chọn nhân vật, thêm cột, ảnh to hơn, tên không xuống dòng. */
+/* ---------- Lưới chọn nhân vật theo cỡ màn hình ----------
+   Cột và cỡ ảnh tính theo cả chiều rộng lẫn chiều cao để hạn chế phải cuộn;
+   từ 720px trở lên tên nhân vật luôn nằm trên một dòng. */
+.character-grid { --thumb: 60px; }
+.character-grid .character-avatar { height: var(--thumb); }
+.character-grid .character-thumb { width: var(--thumb); height: var(--thumb); border-radius: calc(var(--thumb) * 0.25); }
+
+/* Điện thoại dọc: 4 cột để tên không bị xuống 3 dòng. */
+@media (max-width: 600px) {
+  .character-grid,
+  .character-grid.pick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .character-grid { --thumb: 54px; }
+  .character-name { font-size: 12px; }
+  .settings-card { padding: 20px 10px; }
+}
+@media (max-width: 360px) {
+  .character-name { font-size: 11px; }
+}
+@media (min-width: 720px) {
+  .settings-card { width: min(760px, 100%); }
+  .pick-card { max-width: 760px; }
+  .character-grid { --thumb: 72px; }
+  .character-card,
+  .pick-grid .character-card { padding: 14px 2px 12px; }
+  .character-name { font-size: 13px; white-space: nowrap; }
+}
 @media (min-width: 960px) {
-  .settings-card { width: min(1120px, 100%); padding: 28px 32px; }
+  .settings-card { width: min(1120px, 100%); }
   .pick-card { max-width: 1120px; }
   .character-grid,
-  .character-grid.pick-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
-  .character-card,
-  .pick-grid .character-card { padding: 16px 2px 12px; }
-  .character-avatar { height: 84px; }
-  .character-thumb { width: 84px; height: 84px; border-radius: 20px; }
-  .character-name { font-size: 14px; white-space: nowrap; }
+  .character-grid.pick-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+  .character-grid { --thumb: 84px; }
 }
 @media (min-width: 1200px) {
+  .settings-card { padding: 28px 32px; }
   .character-grid,
-  .character-grid.pick-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .character-grid.pick-grid { gap: 14px; }
   .character-name { font-size: 15px; }
 }
-@media (min-width: 960px) and (max-height: 760px) {
-  .character-avatar { height: 64px; }
-  .character-thumb { width: 64px; height: 64px; border-radius: 16px; }
+@media (min-width: 720px) and (max-height: 860px) {
+  .character-grid { --thumb: 64px; }
+  .character-grid.pick-grid { margin-bottom: 12px; }
+  .pick-card p { margin-bottom: 14px; }
+  .pick-card .intro-badge { display: none; }
+}
+@media (min-width: 720px) and (max-height: 700px) {
+  .character-grid { --thumb: 52px; }
+  .character-card,
+  .pick-grid .character-card { padding: 10px 2px 8px; }
+}
+/* Màn hình thấp: thu gọn phần đầu và cuối màn chọn để lưới vừa khung. */
+@media (min-width: 720px) and (max-height: 760px) {
+  .intro.pick { padding: 12px 24px; }
+  .pick-card h1 { font-size: 32px; margin: 0 0 4px; }
+  .pick-card p { margin: 0 0 10px; }
+  .tutorial-check.pick-check { margin-bottom: 10px; }
+  .pick-card .btn.big { padding: 12px 28px; }
+  .pick-card .intro-hint { margin-top: 8px; }
+}
+/* Điện thoại xoay ngang: chiều cao rất thấp nên dàn 7 cột, ảnh nhỏ. */
+@media (min-width: 601px) and (max-height: 500px) {
+  .settings-card { width: min(900px, 100%); }
+  .pick-card { max-width: 900px; }
+  .character-grid,
+  .character-grid.pick-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+  .character-grid { --thumb: 44px; }
+  .character-card,
+  .pick-grid .character-card { padding: 8px 2px 6px; }
+  .character-name { font-size: 12px; white-space: nowrap; }
+  .pick-card h1 { font-size: 28px; }
 }
