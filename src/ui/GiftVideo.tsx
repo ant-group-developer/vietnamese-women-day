@@ -81,7 +81,7 @@ export function GiftVideo({ video, ribbon, onDone }: { video: VideoConfig; ribbo
         </div>
       </motion.div>
       <button className="btn ghost video-skip" onClick={onDone}>
-        Bỏ qua ✕
+        Đóng ✕
       </button>
     </motion.div>
   )
