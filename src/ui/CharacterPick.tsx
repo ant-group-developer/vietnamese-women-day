@@ -6,11 +6,12 @@ import { playSfx } from '../audio/sound'
 import { useGLTF } from '@react-three/drei'
 import { CharacterAvatar } from './CharacterAvatar'
 
-/** Màn chọn nhân vật lần đầu vào web. Lựa chọn được lưu, các lần sau không hỏi lại. */
+/** Màn chọn nhân vật khi vào web. Nhân vật được lưu; tích "không hiển thị lại" thì các lần sau bỏ qua màn này. */
 export function CharacterPick() {
   const initial = useJourney((s) => s.character)
   const confirmCharacter = useJourney((s) => s.confirmCharacter)
   const [picked, setPicked] = useState<CharacterId>(initial)
+  const [dontShow, setDontShow] = useState(false)
   const spec = CHARACTER_LIST.find((c) => c.id === picked)!
 
   return (
@@ -51,10 +52,14 @@ export function CharacterPick() {
           ))}
         </div>
 
-        <motion.button className="btn big" onClick={() => confirmCharacter(picked)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
+        <label className="tutorial-check pick-check">
+          <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)} />
+          Không hiển thị lại lần sau
+        </label>
+        <motion.button className="btn big" onClick={() => confirmCharacter(picked, dontShow)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
           Đi cùng {spec.name} 🌸
         </motion.button>
-        <div className="intro-hint">Bạn có thể đổi nhân vật bất cứ lúc nào ở nút ⚙️ góc trên.</div>
+        <div className="intro-hint">Bạn có thể đổi nhân vật bất cứ lúc nào ở nút 🐾 góc trên.</div>
       </motion.div>
     </motion.div>
   )

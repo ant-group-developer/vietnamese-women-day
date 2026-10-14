@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { nextStationIndex, useJourney } from '../store/useJourney'
-import { SettingsIcon } from './icons'
+import { PawIcon, VolumeIcon } from './icons'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
@@ -14,6 +14,8 @@ export function HUD() {
   const lastVisitedIndex = useJourney((s) => s.lastVisitedIndex)
   const tutorialOpen = useJourney((s) => s.tutorialOpen)
   const giftHintAt = useJourney((s) => s.giftHintAt)
+  const volume = useJourney((s) => s.volume)
+  const audioOn = useJourney((s) => s.audioOn)
   const { goTo, openGift, openSettings } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
@@ -89,8 +91,11 @@ export function HUD() {
           </div>
         </motion.div>
         <div className="hud-actions">
-          <button className="icon-btn" onClick={openSettings} title="Cài đặt: nhân vật, âm lượng" aria-label="Cài đặt">
-            <SettingsIcon />
+          <button className="icon-btn" onClick={() => openSettings('character')} title="Đổi nhân vật dẫn đường" aria-label="Đổi nhân vật">
+            <PawIcon />
+          </button>
+          <button className="icon-btn" onClick={() => openSettings('audio')} title="Âm lượng" aria-label="Âm lượng">
+            <VolumeIcon level={audioOn ? volume : 0} />
           </button>
         </div>
       </div>

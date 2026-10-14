@@ -4,6 +4,8 @@ import { mascot, stationT } from '../scene/path'
 import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
 export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro'
+/** Hộp cài đặt: chọn nhân vật hoặc chỉnh âm lượng. */
+export type SettingsPanel = 'character' | 'audio'
 
 interface JourneyState {
   phase: Phase
@@ -24,8 +26,8 @@ interface JourneyState {
   lastVisitedIndex: number
   /** Hộp hướng dẫn đang mở. */
   tutorialOpen: boolean
-  /** Hộp cài đặt đang mở. */
-  settingsOpen: boolean
+  /** Hộp cài đặt đang mở (null = đóng). */
+  settingsOpen: SettingsPanel | null
   /** Nhân vật dẫn đường đã chọn. */
   character: CharacterId
   /** Thời điểm bấm vào hộp quà khi còn khoá (để lắc hộp và hiện nhắc nhở). */
@@ -36,11 +38,11 @@ interface JourneyState {
   start: () => void
   openTutorial: () => void
   closeTutorial: (dontShowAgain: boolean) => void
-  openSettings: () => void
+  openSettings: (panel: SettingsPanel) => void
   closeSettings: () => void
   setCharacter: (id: CharacterId) => void
-  /** Chọn nhân vật ở màn đầu rồi vào hành trình; lưu lại để lần sau không hỏi. */
-  confirmCharacter: (id: CharacterId) => void
+  /** Chọn nhân vật ở màn đầu rồi vào hành trình; dontShowAgain thì lần sau bỏ qua màn chọn. */
+  confirmCharacter: (id: CharacterId, dontShowAgain: boolean) => void
   goTo: (index: number) => void
   arrive: (index: number) => void
   closeModal: () => void
@@ -59,6 +61,7 @@ const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 
 const TUTORIAL_KEY = 'vn-woman-day:tutorial-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
+const PICK_SKIP_KEY = 'vn-woman-day:pick-skip'
 const VOLUME_KEY = 'vn-woman-day:volume'
 function savedVolume(): number {
   try {
@@ -76,9 +79,10 @@ function savedCharacter(): CharacterId {
     return DEFAULT_CHARACTER
   }
 }
-function hasSavedCharacter(): boolean {
+/** Bỏ qua màn chọn nhân vật? Chỉ khi người dùng đã tích "Không hiển thị lại lần sau". */
+function pickSkipped(): boolean {
   try {
-    return isCharacterId(localStorage.getItem(CHARACTER_KEY))
+    return localStorage.getItem(PICK_SKIP_KEY) === '1'
   } catch {
     return false
   }
@@ -103,12 +107,12 @@ export const useJourney = create<JourneyState>((set, get) => ({
   lastFlowerAt: 0,
   lastVisitedIndex: -1,
   tutorialOpen: false,
-  settingsOpen: false,
+  settingsOpen: null,
   character: savedCharacter(),
   giftHintAt: 0,
   openGiftOnArrive: false,
 
-  start: () => (hasSavedCharacter() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
+  start: () => (pickSkipped() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
   openTutorial: () => set({ tutorialOpen: true }),
   closeTutorial: (dontShowAgain) => {
     if (dontShowAgain) {
@@ -120,10 +124,15 @@ export const useJourney = create<JourneyState>((set, get) => ({
     }
     set({ tutorialOpen: false })
   },
-  openSettings: () => set({ settingsOpen: true }),
-  closeSettings: () => set({ settingsOpen: false }),
-  confirmCharacter: (id) => {
+  openSettings: (panel) => set({ settingsOpen: panel }),
+  closeSettings: () => set({ settingsOpen: null }),
+  confirmCharacter: (id, dontShowAgain) => {
     get().setCharacter(id)
+    try {
+      localStorage.setItem(PICK_SKIP_KEY, dontShowAgain ? '1' : '0')
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn localStorage */
+    }
     set({ phase: 'journey', tutorialOpen: !tutorialSeen() })
   },
   setCharacter: (id) => {

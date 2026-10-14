@@ -69,6 +69,16 @@ export const SettingsIcon = () => (
   </Icon>
 )
 
+export const PawIcon = () => (
+  <Icon>
+    <path d="M12 12.5c-2.6 0-5.5 3.3-5.5 5.6 0 1.6 1.3 2.4 2.8 2.4 1.1 0 1.8-.6 2.7-.6s1.6.6 2.7.6c1.5 0 2.8-.8 2.8-2.4 0-2.3-2.9-5.6-5.5-5.6z" fill="currentColor" stroke="none" />
+    <ellipse cx="8.6" cy="6.6" rx="1.7" ry="2.3" fill="currentColor" stroke="none" />
+    <ellipse cx="15.4" cy="6.6" rx="1.7" ry="2.3" fill="currentColor" stroke="none" />
+    <ellipse cx="4.6" cy="11" rx="1.6" ry="2" fill="currentColor" stroke="none" />
+    <ellipse cx="19.4" cy="11" rx="1.6" ry="2" fill="currentColor" stroke="none" />
+  </Icon>
+)
+
 export const ChevronLeftIcon = () => (
   <Icon>
     <path d="M14.5 5.5L8 12l6.5 6.5" />

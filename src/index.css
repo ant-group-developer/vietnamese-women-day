@@ -195,6 +195,9 @@ button {
   margin-bottom: 20px;
 }
 .pick-grid .character-card { padding: 14px 6px 12px; }
+.tutorial-check.pick-check { font-size: 17px; font-weight: 700; color: var(--rose-900); margin-bottom: 18px; }
+.tutorial-check.pick-check input { width: 22px; height: 22px; }
+.pick-card .intro-hint { font-size: 16px; opacity: 0.8; }
 .pick-grid .character-emoji { font-size: 48px; }
 @media (max-width: 600px) {
   .character-grid.pick-grid { gap: 8px; }
@@ -388,6 +391,7 @@ button {
 .settings-card h2 { margin: 0 0 4px; font-size: 26px; color: var(--pink-500); }
 .settings-sub { margin: 0 0 16px; opacity: 0.75; font-size: 15px; }
 .settings-close { background: var(--pink-200); color: var(--pink-500); }
+.settings-card.audio-card { width: min(440px, 100%); }
 .volume-row {
   display: flex;
   align-items: center;
@@ -816,4 +820,26 @@ button {
   .settings-card, .tutorial-card { max-height: calc(100dvh - 20px); }
   .video-layer { padding: 34px 16px 10px; }
   .video-frame { width: min(960px, 100%, calc((100dvh - 110px) * var(--ar, 16 / 9) + 48px)); }
+}
+
+/* Màn hình lớn: nới rộng bảng chọn nhân vật, thêm cột, ảnh to hơn, tên không xuống dòng. */
+@media (min-width: 960px) {
+  .settings-card { width: min(1120px, 100%); padding: 28px 32px; }
+  .pick-card { max-width: 1120px; }
+  .character-grid,
+  .character-grid.pick-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+  .character-card,
+  .pick-grid .character-card { padding: 16px 2px 12px; }
+  .character-avatar { height: 84px; }
+  .character-thumb { width: 84px; height: 84px; border-radius: 20px; }
+  .character-name { font-size: 14px; white-space: nowrap; }
+}
+@media (min-width: 1200px) {
+  .character-grid,
+  .character-grid.pick-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .character-name { font-size: 15px; }
+}
+@media (min-width: 960px) and (max-height: 760px) {
+  .character-avatar { height: 64px; }
+  .character-thumb { width: 64px; height: 64px; border-radius: 16px; }
 }
