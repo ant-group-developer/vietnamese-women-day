@@ -6,9 +6,8 @@ Website 3D vui nhộn: một bạn đồng hành nhỏ dẫn người xem đi qu
 - Kéo chuột/ngón tay để xoay bản đồ, cuộn chuột hoặc chụm hai ngón để zoom. Nút 🎯 đưa camera về sau nhân vật.
 - Nút "Đi tiếp" gợi ý phòng ban chưa thăm gần nhất. Thăm đủ mọi phòng thì hộp quà mở khoá.
 - Cụm nút góc phải dưới: phóng to, thu nhỏ, xoay trái/phải, về nhân vật, mở lại hướng dẫn. Hướng dẫn hiện lần đầu vào; tích "Không hiển thị lại" thì lưu trong localStorage của trình duyệt.
-- Lần đầu vào web sẽ chọn nhân vật dẫn đường (19 con, mặc định Gà Con), lựa chọn lưu trong localStorage; đổi lại ở nút ⚙️. Nhân vật là model GLB có animation:
-  - Gà Con: bộ Cube Pets Free (sneznyj.itch.io/cube-pets), `public/models/Chick.glb`.
-  - 18 con còn lại: bộ Cozy Animals của Gamideo (`assets/Gamideo_cozy_animals`), texture đã thu về 1024px cho nhẹ, đặt trong `public/models/cozy`; ảnh thẻ chọn cắt từ `preview.png` của bộ, đặt trong `public/images/characters`. Rùa, hải cẩu chỉ có animation bơi; vẹt, chim ruồi bay lơ lửng.
+- Khi vào web sẽ chọn nhân vật dẫn đường (18 con, mặc định Gấu Mèo), lựa chọn lưu trong localStorage; tích "Không hiển thị lại lần sau" thì các lần sau bỏ qua màn chọn. Đổi nhân vật ở nút 🐾, chỉnh âm lượng ở nút loa. Nhân vật là model GLB có animation:
+  - Bộ Cozy Animals của Gamideo (`assets/Gamideo_cozy_animals`), texture đã thu về 1024px cho nhẹ, đặt trong `public/models/cozy`; ảnh thẻ chọn cắt từ `preview.png` của bộ, đặt trong `public/images/characters`. Rùa, hải cẩu chỉ có animation bơi; vẹt, chim ruồi bay lơ lửng.
   - Thêm nhân vật mới: bỏ GLB vào `public/models` và khai báo trong `src/scene/characters.tsx` (tên clip đứng yên/di chuyển/chào, tỉ lệ, tốc độ bước).
 - Cảnh vật dùng model CC0 trong `public/models/env` (khai báo ở `src/scene/envAssets.ts`): cây, bụi, hoa, nấm, đá từ Kenney Nature Kit; nhà lắp từ mảnh tường/mái của Kenney Fantasy Town Kit (màu mái và tường lấy theo màu phòng ban); hộp quà từ Kenney Holiday Kit (nắp tách rời để mở); mây của Quaternius (poly.pizza). Gói gốc tải về nằm trong `assets/kenney` (không commit).
 - Trong thiệp phòng ban, bấm vào ảnh để xem lớn. Video quà giữ nguyên tỉ lệ gốc (ngang hay dọc đều không bị cắt).

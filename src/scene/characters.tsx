@@ -1,7 +1,6 @@
 /**
  * Nhân vật dẫn đường: model GLB có rig + animation, hướng mặt +Z, đơn vị mét.
- * - Gà Con (mặc định) từ bộ Cube Pets (assets/CubePets_Free): clip Idle, Walk, Run (lặp), Jump, Trick (một lần), texture pixel-art.
- * - Bộ Cozy Animals của Gamideo (assets/Gamideo_cozy_animals, texture đã thu về 1024px trong public/models/cozy):
+ * Bộ Cozy Animals của Gamideo (assets/Gamideo_cozy_animals, texture đã thu về 1024px trong public/models/cozy):
  *   cao ~1.7, clip idle, walk (lặp), gesture (một lần); rùa và hải cẩu chỉ có swimIdle/swim; chim chỉ có fly.
  */
 interface CharacterDef {
@@ -23,8 +22,6 @@ interface CharacterDef {
   maxTimeScale?: number
   /** Hệ số tốc độ cho mọi clip của nhân vật (vd. 0.6 = vỗ cánh chậm lại 40%). */
   clipSpeed?: number
-  /** Texture pixel-art nhỏ: lọc Nearest cho nét. */
-  pixelArt?: boolean
   /** Bay lơ lửng cách mặt đất (đơn vị cảnh). */
   hover?: number
   /** Bán kính bóng dưới chân. */
@@ -33,16 +30,6 @@ interface CharacterDef {
 
 type Def = CharacterDef
 export type CharacterSpec = CharacterDef & { id: CharacterId }
-
-const CUBE_CLIPS = { idle: 'Idle', move: 'Run', trick: 'Trick' }
-const cube = (d: Pick<Def, 'name' | 'emoji' | 'color' | 'model' | 'scale'> & Partial<Def>): Def => ({
-  ...d,
-  clips: CUBE_CLIPS,
-  // Theo README của bộ model: Run đi 2.24 m/s.
-  moveSpeed: 2.24,
-  pixelArt: true,
-  shadow: 0.3 * d.scale,
-})
 
 const LAND = { idle: 'idle', move: 'walk', trick: 'gesture' }
 const SWIM = { idle: 'swimIdle', move: 'swim' }
@@ -59,7 +46,6 @@ const cozy = (file: string, thumb: string, d: Pick<Def, 'name' | 'emoji' | 'colo
 })
 
 const DEFS = {
-  chick: cube({ name: 'Gà Con', emoji: '🐥', color: '#ffd166', model: '/models/Chick.glb', thumb: '/images/characters/chick.webp', scale: 1.9 }),
   fox: cozy('Fox', 'fox', { name: 'Cáo Nhỏ', emoji: '🦊', color: '#ff7a3d' }),
   redPanda: cozy('RedPanda', 'red-panda', { name: 'Gấu Trúc Đỏ', emoji: '🐾', color: '#d9572b' }),
   lamb: cozy('Lamb', 'lamb', { name: 'Cừu Non', emoji: '🐑', color: '#f2c9a0' }),
@@ -86,7 +72,7 @@ export const CHARACTERS = Object.fromEntries(Object.entries(DEFS).map(([id, d]) 
 
 export const CHARACTER_LIST: CharacterSpec[] = Object.values(CHARACTERS)
 
-export const DEFAULT_CHARACTER: CharacterId = 'chick'
+export const DEFAULT_CHARACTER: CharacterId = 'raccoon'
 
 export function isCharacterId(v: unknown): v is CharacterId {
   return typeof v === 'string' && Object.hasOwn(CHARACTERS, v)

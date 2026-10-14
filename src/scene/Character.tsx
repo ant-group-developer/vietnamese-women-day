@@ -24,29 +24,15 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
   const current = useRef<string>('')
   const lastArrive = useRef(0)
 
-  // Bật bóng đổ; texture pixel-art (Cube Pets 64x64) lọc Nearest cho nét.
+  // Bật bóng đổ.
   useEffect(() => {
     gltf.scene.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
       mesh.castShadow = true
       mesh.frustumCulled = false
-      if (!spec.pixelArt) return
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      mats.forEach((m) => {
-        const std = m as THREE.MeshStandardMaterial
-        for (const key of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'] as const) {
-          const tex = std[key]
-          if (tex) {
-            tex.magFilter = THREE.NearestFilter
-            tex.minFilter = THREE.NearestFilter
-            tex.generateMipmaps = false
-            tex.needsUpdate = true
-          }
-        }
-      })
     })
-  }, [gltf, spec.pixelArt])
+  }, [gltf])
 
   const play = (name: string, once = false) => {
     const next = actions[name]
