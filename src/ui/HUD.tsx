@@ -26,7 +26,7 @@ export function HUD() {
     const remaining = STATION_COUNT - useJourney.getState().visited.filter(Boolean).length
     setFlowerToast(
       remaining > 0
-        ? `+1 bông hoa! Còn ${remaining} phòng ban nữa là mở được quà 🎁`
+        ? `+1 bông hoa! Còn ${remaining} phòng ban nữa là mở được quà\u00a0🎁`
         : 'Tuyệt vời! Đủ hoa rồi, hộp quà đã mở khoá 🎉',
     )
     const t = setTimeout(() => setPopIndex(null), 700)
@@ -55,9 +55,9 @@ export function HUD() {
 
   let action: { label: string; onClick: () => void; cls?: string } | null = null
   if (idle) {
-    if (phase === 'gift') action = { label: 'Mở quà 🎁', onClick: openGift, cls: 'gift' }
+    if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
     else if (next < STATION_COUNT) action = { label: `Đi tiếp → ${departments[next].name}`, onClick: () => goTo(next) }
-    else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà 🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
+    else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà\u00a0🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
   }
 
   let toast: string | null = null
@@ -68,9 +68,9 @@ export function HUD() {
   } else if (flowerToast) {
     toast = flowerToast
   } else if (targetIndex !== null) {
-    toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà... 🎁' : `Đang đi tới ${departments[targetIndex].name}...`
+    toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà...\u00a0🎁' : `Đang đi tới ${departments[targetIndex].name}...`
   } else if (count === 0 && currentIndex === -1) {
-    toast = `Ghé thăm đủ ${STATION_COUNT} phòng ban để mở hộp quà bí mật 🎁`
+    toast = `Ghé thăm đủ ${STATION_COUNT} phòng ban để mở hộp quà bí mật\u00a0🎁`
   } else if (phase === 'gift') {
     toast = 'Đủ hoa rồi! Bấm vào hộp quà nào 🎉'
   }
@@ -80,7 +80,7 @@ export function HUD() {
       <div className="hud-top">
         <motion.div className="hud-progress" initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <div className="label">
-            Bó hoa: {count}/{STATION_COUNT} · {count < STATION_COUNT ? `đủ ${STATION_COUNT} hoa sẽ mở quà 🎁` : 'đã mở khoá quà 🎉'}
+            Bó hoa: {count}/{STATION_COUNT} · {count < STATION_COUNT ? `đủ ${STATION_COUNT} hoa sẽ mở quà\u00a0🎁` : 'đã mở khoá quà\u00a0🎉'}
           </div>
           <div className="hud-flowers">
             {departments.map((d, i) => (

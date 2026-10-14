@@ -113,13 +113,17 @@ export function stopBgm() {
 
 /** Đồng bộ trạng thái bật/tắt audio và âm lượng tổng từ store. */
 export function bindAudioToStore() {
+  // Tắt âm (hoặc kéo âm lượng về 0) thì dừng hẳn nhạc nền, không chỉ tắt tiếng;
+  // bật lại thì phát tiếp từ chỗ dừng.
+  const audible = (s: { audioOn: boolean; volume: number }) => s.audioOn && s.volume > 0
   const apply = (on: boolean) => {
     Howler.mute(!on)
     if (on) startBgm()
+    else stopBgm()
   }
-  const { audioOn, volume } = useJourney.getState()
-  Howler.volume(volume)
-  apply(audioOn)
+  const initial = useJourney.getState()
+  Howler.volume(initial.volume)
+  apply(audible(initial))
   // Chỉ phát nhạc nền khi người dùng đang ở trong tab; rời tab thì tạm dừng, quay lại thì phát tiếp.
   const onVisibility = () => {
     tabHidden = document.hidden
@@ -129,7 +133,7 @@ export function bindAudioToStore() {
   document.addEventListener('visibilitychange', onVisibility)
   const unsub = useJourney.subscribe((s, prev) => {
     if (s.volume !== prev.volume) Howler.volume(s.volume)
-    if (s.audioOn !== prev.audioOn) apply(s.audioOn)
+    if (audible(s) !== audible(prev)) apply(audible(s))
   })
   return () => {
     unsub()

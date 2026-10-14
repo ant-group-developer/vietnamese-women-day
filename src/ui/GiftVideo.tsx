@@ -20,7 +20,8 @@ export function GiftVideo() {
   useEffect(() => {
     stopBgm()
     return () => {
-      if (useJourney.getState().audioOn) startBgm()
+      const { audioOn, volume } = useJourney.getState()
+      if (audioOn && volume > 0) startBgm()
     }
   }, [])
 
