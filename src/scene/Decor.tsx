@@ -50,6 +50,8 @@ function buildDecor(): DecorItem[] {
   const { center, rx, rz } = layout.island
   const samples = layout.curve.getSpacedPoints(300)
   const houses = [...layout.stations.map((s) => s.housePos), layout.gift.housePos]
+  /** Chừa chỗ cho quà bóng bay đáp xuống. */
+  const bonusSpots = layout.stations.map((s) => s.bonusPos)
   const items: DecorItem[] = []
   const target = isMobile ? 80 : 160
   let attempts = 0
@@ -62,6 +64,7 @@ function buildDecor(): DecorItem[] {
     const p = new THREE.Vector3(x, 0, z)
     if (samples.some((s) => s.distanceToSquared(p) < 1.9 * 1.9)) continue
     if (houses.some((h) => h.distanceToSquared(p) < 2.6 * 2.6)) continue
+    if (bonusSpots.some((b) => b.distanceToSquared(p) < 1.5 * 1.5)) continue
     if (items.some((it) => (it.pos[0] - x) ** 2 + (it.pos[2] - z) ** 2 < 0.8)) continue
     const k = rnd()
     const kind: DecorKind =

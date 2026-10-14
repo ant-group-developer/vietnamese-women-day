@@ -98,6 +98,14 @@ button {
 .icon-btn:active { transform: scale(0.94); }
 .icon-btn.off { opacity: 0.55; }
 .icon-btn.active { background: var(--pink-200); }
+/* Nút xem video bất ngờ: nhún nhảy khi quà vừa rơi xuống mà chưa mở. */
+.icon-btn.bonus-new { animation: bonus-wiggle 1.4s ease-in-out infinite; border-color: var(--pink-300); }
+@keyframes bonus-wiggle {
+  0%, 60%, 100% { transform: rotate(0) scale(1); }
+  70% { transform: rotate(-12deg) scale(1.12); }
+  80% { transform: rotate(10deg) scale(1.12); }
+  90% { transform: rotate(-6deg) scale(1.05); }
+}
 
 /* ---------- Petals ---------- */
 .petals {
@@ -326,6 +334,32 @@ button {
 .station-label.locked { opacity: 0.55; filter: grayscale(0.6); }
 .station-label.suggested { animation: label-bounce 1.2s ease-in-out infinite; }
 .station-label.visited { background: var(--mint-200); }
+.station-label.bonus { background: var(--lavender-200); }
+/* Nhãn nằm dưới điểm neo (mũi nhọn chỉ lên), nhún nhảy như nhãn gợi ý.
+   Chữ to hơn nhãn phòng ban vì nhãn bị thu nhỏ theo khoảng cách camera, trên điện thoại còn rất bé. */
+.station-label.below { font-size: 18px; transform: translate(-50%, 12px); animation: label-bounce-below 1.2s ease-in-out infinite; }
+.station-label.below::after { top: -6px; bottom: auto; }
+@keyframes label-bounce-below {
+  0%, 100% { transform: translate(-50%, 12px); }
+  50% { transform: translate(-50%, 18px); }
+}
+/* Bàn tay đứng cạnh quà bóng bay, chọc chọc vào hộp. */
+.tap-hand {
+  font-size: 56px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.25));
+}
+.tap-hand.right { transform: translate(0, -50%); animation: tap-hand-left 0.9s ease-in-out infinite; }
+.tap-hand.left { transform: translate(-100%, -50%); animation: tap-hand-right 0.9s ease-in-out infinite; }
+@keyframes tap-hand-left {
+  0%, 100% { transform: translate(0, -50%); }
+  50% { transform: translate(-12px, -50%) scale(0.92); }
+}
+@keyframes tap-hand-right {
+  0%, 100% { transform: translate(-100%, -50%); }
+  50% { transform: translate(calc(-100% + 12px), -50%) scale(0.92); }
+}
 @keyframes label-bounce {
   0%, 100% { transform: translate(-50%, -100%); }
   50% { transform: translate(-50%, calc(-100% - 8px)); }
@@ -789,8 +823,10 @@ button {
   .cam-controls .icon-btn { width: 38px; height: 38px; font-size: 19px; }
   .hud-bottom { padding: 0 16px; }
   .hud-bottom .btn { max-width: 100%; justify-content: center; text-align: center; line-height: 1.15; }
-  .hud-toast { font-size: 14px; top: 108px; }
+  .hud-toast { font-size: 14px; top: 118px; }
   .hud-progress { padding: 10px 14px; border-radius: 20px; }
+  /* Tối đa 2 nút một hàng: nút xem video bất ngờ xuống hàng dưới để hàng hoa không bị chật. */
+  .hud-actions { flex-wrap: wrap; justify-content: flex-end; max-width: 96px; }
   .hud-progress .label { font-size: 14px; line-height: 1.3; }
   .hud-flowers { font-size: 20px; flex-wrap: nowrap; }
   .tutorial-card { padding: 20px 16px 16px; }

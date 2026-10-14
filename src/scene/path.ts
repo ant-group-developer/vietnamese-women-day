@@ -25,6 +25,8 @@ export interface StationLayout {
   pos: THREE.Vector3
   /** Vị trí ngôi nhà/hộp quà. */
   housePos: THREE.Vector3
+  /** Chỗ quà bóng bay đáp xuống nếu rơi ở trạm này: cạnh điểm dừng, phía camera, tránh đường và nhà. */
+  bonusPos: THREE.Vector3
 }
 
 export interface PathLayout {
@@ -77,18 +79,38 @@ function buildLayout(): PathLayout {
     t: tFor(p),
     pos: p.clone(),
     housePos: p.clone().add(new THREE.Vector3(0, 0, p.z > 0 ? -HOUSE_BACK_INSIDE : -HOUSE_BACK)),
+    bonusPos: p.clone(),
   }))
 
   const box = new THREE.Box3().setFromPoints([...points, ...all.map((s) => s.housePos)])
   const size = box.getSize(new THREE.Vector3())
   const center = box.getCenter(new THREE.Vector3())
   center.y = 0
+  const island = { center, rx: size.x / 2 + 4.5, rz: size.z / 2 + 5.5 }
+
+  // Chỗ đáp của quà bóng bay: thử lần lượt các hướng, ưu tiên ngang hàng bên cạnh nhân vật
+  // (đặt phía trước thì chùm bóng bay che mất nhân vật).
+  const pathSamples = curve.getSpacedPoints(300)
+  const houses = all.map((s) => s.housePos)
+  const OFFSETS: [number, number][] = [
+    [3, 0.4], [-3, 0.4], [3.4, -0.6], [-3.4, -0.6], [3, 1.4], [-3, 1.4], [3.8, 0.4], [-3.8, 0.4], [2.4, 2.4], [-2.4, 2.4],
+  ]
+  for (const s of all) {
+    const candidates = OFFSETS.map(([dx, dz]) => new THREE.Vector3(s.pos.x + dx, 0, s.pos.z + dz))
+    const free = candidates.find(
+      (c) =>
+        ((c.x - center.x) / (island.rx - 2)) ** 2 + ((c.z - center.z) / (island.rz - 2)) ** 2 < 1 &&
+        pathSamples.every((p) => p.distanceToSquared(c) > 1.9 * 1.9) &&
+        houses.every((h) => h.distanceToSquared(c) > 3 * 3),
+    )
+    s.bonusPos = free ?? candidates[0]
+  }
 
   return {
     curve,
     stations: all.slice(0, STATION_COUNT),
     gift: all[STATION_COUNT],
-    island: { center, rx: size.x / 2 + 4.5, rz: size.z / 2 + 5.5 },
+    island,
     length: curve.getLength(),
   }
 }
@@ -105,6 +127,12 @@ if (import.meta.env.DEV) {
   const w = window as unknown as { __mascot: typeof mascot; __layout: typeof layout }
   w.__mascot = mascot
   w.__layout = layout
+}
+
+/** Quà bóng bay của trạm index nằm bên phải (1) hay bên trái (-1) điểm dừng, để bàn tay hướng dẫn đứng phía ngoài. */
+export function bonusSide(index: number): 1 | -1 {
+  const s = layout.stations[index]
+  return s && s.bonusPos.x < s.pos.x ? -1 : 1
 }
 
 export function stationT(index: number): number {

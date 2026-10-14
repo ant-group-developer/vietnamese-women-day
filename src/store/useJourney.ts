@@ -1,9 +1,15 @@
 import { create } from 'zustand'
 import { GIFT_INDEX, STATION_COUNT } from '../data/departments'
+import { siteData } from '../data/siteData'
 import { mascot, stationT } from '../scene/path'
 import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
-export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro'
+export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro' | 'bonus'
+/**
+ * Quà bóng bay giữa hành trình: none → dropping (đang rơi) → ready (đã đáp, chờ bấm)
+ * → opening (bóng bay bay đi, mở nắp) → opened (đã xem video, xem lại được).
+ */
+export type BonusStage = 'none' | 'dropping' | 'ready' | 'opening' | 'opened'
 /** Hộp cài đặt: chọn nhân vật hoặc chỉnh âm lượng. */
 export type SettingsPanel = 'character' | 'audio'
 
@@ -34,6 +40,13 @@ interface JourneyState {
   giftHintAt: number
   /** Bấm hộp quà từ xa: tới nơi thì tự mở. */
   openGiftOnArrive: boolean
+  bonusStage: BonusStage
+  /** Trạm mà quà bóng bay rơi xuống cạnh đó. */
+  bonusIndex: number
+  /** Thời điểm quà bóng bay đáp xuống (để HUD hiện thông báo). */
+  bonusLandedAt: number
+  /** Phase để quay về sau khi xem xong video bất ngờ. */
+  bonusReturn: Phase
 
   start: () => void
   openTutorial: () => void
@@ -50,6 +63,13 @@ interface JourneyState {
   /** Bấm vào hộp quà: còn khoá thì nhắc, đủ hoa thì chạy tới và mở. */
   tapGift: () => void
   playVideo: () => void
+  /** Quà bóng bay đã rơi chạm đất. */
+  landBonus: () => void
+  /** Bấm vào quà bóng bay: mở hộp rồi phát video bất ngờ. */
+  tapBonus: () => void
+  /** Phát video bất ngờ (cũng dùng cho nút xem lại). */
+  playBonus: () => void
+  finishBonus: () => void
   finishVideo: () => void
   restart: () => void
   toggleAudio: () => void
@@ -58,6 +78,10 @@ interface JourneyState {
 }
 
 const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
+
+/** Có video bất ngờ thì mới thả quà bóng bay. */
+export const BONUS_ENABLED = !!siteData.bonus.src
+const BONUS_FLOWERS = siteData.bonus.flowers
 
 const TUTORIAL_KEY = 'vn-woman-day:tutorial-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
@@ -111,6 +135,10 @@ export const useJourney = create<JourneyState>((set, get) => ({
   character: savedCharacter(),
   giftHintAt: 0,
   openGiftOnArrive: false,
+  bonusStage: 'none',
+  bonusIndex: -1,
+  bonusLandedAt: 0,
+  bonusReturn: 'journey',
 
   start: () => (pickSkipped() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
   openTutorial: () => set({ tutorialOpen: true }),
@@ -170,16 +198,19 @@ export const useJourney = create<JourneyState>((set, get) => ({
   },
 
   closeModal: () => {
-    const { openedIndex, visited } = get()
+    const { openedIndex, visited, bonusStage } = get()
     if (openedIndex === null) return
     const next = [...visited]
     const gained = !next[openedIndex]
     next[openedIndex] = true
+    // Vừa đủ số hoa: thả quà bóng bay xuống cạnh trạm vừa thăm.
+    const drop = BONUS_ENABLED && gained && bonusStage === 'none' && next.filter(Boolean).length >= BONUS_FLOWERS
     set({
       openedIndex: null,
       visited: next,
       lastFlowerAt: gained ? Date.now() : get().lastFlowerAt,
       lastVisitedIndex: openedIndex,
+      ...(drop ? { bonusStage: 'dropping' as const, bonusIndex: openedIndex } : {}),
     })
   },
 
@@ -206,6 +237,28 @@ export const useJourney = create<JourneyState>((set, get) => ({
 
   playVideo: () => set({ phase: 'video' }),
 
+  landBonus: () => {
+    if (get().bonusStage === 'dropping') set({ bonusStage: 'ready', bonusLandedAt: Date.now() })
+  },
+
+  tapBonus: () => {
+    const s = get()
+    if (s.phase !== 'journey' && s.phase !== 'gift') return
+    if (s.openedIndex !== null || s.tutorialOpen || s.settingsOpen) return
+    if (s.bonusStage === 'ready') set({ bonusStage: 'opening' })
+    else if (s.bonusStage === 'opened') s.playBonus()
+  },
+
+  playBonus: () => {
+    const { phase, bonusStage } = get()
+    if (bonusStage === 'none' || phase === 'bonus') return
+    set({ phase: 'bonus', bonusReturn: phase, bonusStage: 'opened' })
+  },
+
+  finishBonus: () => {
+    if (get().phase === 'bonus') set({ phase: get().bonusReturn })
+  },
+
   finishVideo: () => set({ phase: 'outro' }),
 
   restart: () =>
@@ -218,6 +271,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
       lastFlowerAt: 0,
       lastVisitedIndex: -1,
       openGiftOnArrive: false,
+      bonusStage: 'none',
+      bonusIndex: -1,
       cameraResetAt: Date.now(),
     }),
 

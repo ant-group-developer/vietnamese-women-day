@@ -14,9 +14,12 @@ import { CameraControls } from './ui/CameraControls'
 import { SettingsModal } from './ui/SettingsModal'
 import { useJourney } from './store/useJourney'
 import { bindAudioToStore } from './audio/sound'
+import { siteData } from './data/siteData'
 
 export default function App() {
   const phase = useJourney((s) => s.phase)
+  const finishVideo = useJourney((s) => s.finishVideo)
+  const finishBonus = useJourney((s) => s.finishBonus)
 
   useEffect(() => bindAudioToStore(), [])
 
@@ -36,7 +39,12 @@ export default function App() {
       <Tutorial />
       <SettingsModal />
       <AnimatePresence>
-        {phase === 'video' && <GiftVideo key="video" />}
+        {phase === 'video' && (
+          <GiftVideo key="video" video={siteData.video} ribbon="💝 Món quà dành tặng bạn 💝" onDone={finishVideo} />
+        )}
+        {phase === 'bonus' && (
+          <GiftVideo key="bonus" video={siteData.bonus} ribbon="🎈 Quà bất ngờ giữa đường 🎈" onDone={finishBonus} />
+        )}
         {phase === 'outro' && <Outro key="outro" />}
         {phase === 'intro' && <Intro key="intro" />}
         {phase === 'pick' && <CharacterPick key="pick" />}

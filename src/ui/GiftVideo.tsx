@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { motion } from 'framer-motion'
-import { siteData } from '../data/siteData'
+import type { VideoConfig } from '../data/siteData'
 import { youtubeEmbed } from '../utils/youtube'
 import { useJourney } from '../store/useJourney'
 import { startBgm, stopBgm } from '../audio/sound'
 
-export function GiftVideo() {
-  const finishVideo = useJourney((s) => s.finishVideo)
+/** Khung phát video quà (video cuối hành trình hoặc video bất ngờ). */
+export function GiftVideo({ video, ribbon, onDone }: { video: VideoConfig; ribbon: string; onDone: () => void }) {
   const volume = useJourney((s) => s.volume)
   const audioOn = useJourney((s) => s.audioOn)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { video } = siteData
   const [error, setError] = useState(!video.src)
   // Tỉ lệ khung theo video gốc (rộng / cao); YouTube Shorts mặc định dọc
   const [ratio, setRatio] = useState(
@@ -42,7 +41,7 @@ export function GiftVideo() {
         animate={{ scale: 1, y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 180, damping: 18, delay: 0.1 }}
       >
-        <div className="video-ribbon">💝 Món quà dành tặng bạn 💝</div>
+        <div className="video-ribbon">{ribbon}</div>
         <span className="video-deco tl">🌸</span>
         <span className="video-deco tr">🌷</span>
         <span className="video-deco bl">🌷</span>
@@ -60,7 +59,7 @@ export function GiftVideo() {
             <div className="video-missing">
               <div style={{ fontSize: 56 }}>🎬</div>
               <p>Chưa có video. Hãy thêm video ở trang cấu hình /admin.</p>
-              <button className="btn" onClick={finishVideo}>
+              <button className="btn" onClick={onDone}>
                 Tiếp tục ➜
               </button>
             </div>
@@ -75,13 +74,13 @@ export function GiftVideo() {
                 const { videoWidth: w, videoHeight: h } = e.currentTarget
                 if (w && h) setRatio(w / h)
               }}
-              onEnded={finishVideo}
+              onEnded={onDone}
               onError={() => setError(true)}
             />
           )}
         </div>
       </motion.div>
-      <button className="btn ghost video-skip" onClick={finishVideo}>
+      <button className="btn ghost video-skip" onClick={onDone}>
         Bỏ qua ✕
       </button>
     </motion.div>

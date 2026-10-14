@@ -4,17 +4,18 @@ import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useJourney } from '../store/useJourney'
-import { housePosition, mascot } from './path'
+import { housePosition, layout, mascot } from './path'
 import { damp } from './utils'
 import { cameraCmd } from './cameraControl'
 
-export const CAMERA_OFFSET = new THREE.Vector3(2.5, 8.5, 10)
+export const CAMERA_OFFSET = new THREE.Vector3(3, 10.2, 12)
 const GIFT_OFFSET = new THREE.Vector3(0, 5.5, 9)
 
 const focus = new THREE.Vector3()
 const delta = new THREE.Vector3()
 const desired = new THREE.Vector3()
 const giftLift = new THREE.Vector3(0, 1.2, 0)
+const bonusLift = new THREE.Vector3(0, 1.5, 0)
 const offset = new THREE.Vector3()
 const Y_AXIS = new THREE.Vector3(0, 1, 0)
 const MIN_DIST = 5
@@ -42,11 +43,19 @@ export function CameraRig() {
     const c = controls.current
     if (!c) return
     const now = clock.elapsedTime
-    const { openedIndex, phase, currentIndex, cameraResetAt } = useJourney.getState()
+    const { openedIndex, phase, currentIndex, targetIndex, cameraResetAt, bonusStage, bonusIndex } = useJourney.getState()
     const giftFocus = phase === 'opening' || phase === 'gift' || phase === 'video' || phase === 'outro'
 
     if (giftFocus) focus.copy(housePosition(currentIndex)).add(giftLift)
     else if (openedIndex !== null) focus.copy(housePosition(openedIndex)).lerp(mascot.pos, 0.5)
+    // Quà bóng bay chưa mở và nhân vật còn đứng cạnh: nhìn vào giữa nhân vật và hộp quà
+    // (màn hình dọc hẹp, nhìn mỗi nhân vật thì hộp quà bị lệch ra mép).
+    else if (
+      (bonusStage === 'dropping' || bonusStage === 'ready' || bonusStage === 'opening') &&
+      bonusIndex === currentIndex &&
+      targetIndex === null
+    )
+      focus.copy(layout.stations[bonusIndex].bonusPos).lerp(mascot.pos, 0.5).add(bonusLift)
     else focus.copy(mascot.pos)
 
     // Yêu cầu đưa camera về góc mặc định (nút HUD, restart, hoặc khi tới hộp quà).

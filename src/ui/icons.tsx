@@ -79,6 +79,13 @@ export const PawIcon = () => (
   </Icon>
 )
 
+export const FilmIcon = () => (
+  <Icon>
+    <rect x="3.5" y="5" width="17" height="14" rx="3" />
+    <path d="M10.2 9.3v5.4l4.6-2.7z" fill="currentColor" />
+  </Icon>
+)
+
 export const ChevronLeftIcon = () => (
   <Icon>
     <path d="M14.5 5.5L8 12l6.5 6.5" />

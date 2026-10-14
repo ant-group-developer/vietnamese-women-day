@@ -36,13 +36,22 @@ export interface VideoConfig {
   src: string
 }
 
+/** Video bất ngờ giữa hành trình: quà treo bóng bay rơi xuống khi thu thập đủ `flowers` bông hoa. */
+export interface BonusConfig extends VideoConfig {
+  flowers: number
+}
+
 export interface SiteData {
   version: 1
   departments: Department[]
   music: MusicConfig
   video: VideoConfig
+  bonus: BonusConfig
   updatedAt?: string
 }
+
+/** Mặc định: quà bóng bay rơi khi có 4 bông hoa. */
+export const DEFAULT_BONUS_FLOWERS = 4
 
 export const LIMITS = {
   departments: 30,
@@ -85,6 +94,13 @@ function arr(v: unknown, where: string, max: number): unknown[] {
 function obj(v: unknown, where: string): Record<string, unknown> {
   if (!v || typeof v !== 'object' || Array.isArray(v)) fail(`${where}: dữ liệu không hợp lệ`)
   return v as Record<string, unknown>
+}
+
+function video(input: unknown, where: string): VideoConfig {
+  const v = obj(input ?? {}, where)
+  const type = v.type === 'youtube' ? 'youtube' : 'mp4'
+  const src = type === 'youtube' ? str(v.src, `${where} – link YouTube`, 500, false) : url(v.src, `${where} – file`, false)
+  return { type, src }
 }
 
 /** Kiểm tra + chuẩn hoá dữ liệu. Ném Error (tiếng Việt) nếu sai. */
@@ -138,15 +154,18 @@ export function parseSiteData(input: unknown): SiteData {
   })
   const volume = typeof m.volume === 'number' && Number.isFinite(m.volume) ? Math.min(1, Math.max(0, m.volume)) : 0.15
 
-  const v = obj(root.video ?? {}, 'Video')
-  const type = v.type === 'youtube' ? 'youtube' : 'mp4'
-  const src = type === 'youtube' ? str(v.src, 'Video – link YouTube', 500, false) : url(v.src, 'Video – file', false)
+  const b = obj(root.bonus ?? {}, 'Video bất ngờ')
+  const flowers =
+    typeof b.flowers === 'number' && Number.isFinite(b.flowers)
+      ? Math.min(departments.length, Math.max(1, Math.round(b.flowers)))
+      : Math.min(departments.length, DEFAULT_BONUS_FLOWERS)
 
   return {
     version: 1,
     departments,
     music: { tracks, shuffle: m.shuffle === true, volume },
-    video: { type, src },
+    video: video(root.video, 'Video'),
+    bonus: { ...video(root.bonus, 'Video bất ngờ'), flowers },
     updatedAt: typeof root.updatedAt === 'string' ? root.updatedAt : undefined,
   }
 }

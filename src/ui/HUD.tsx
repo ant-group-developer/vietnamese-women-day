@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { nextStationIndex, useJourney } from '../store/useJourney'
-import { PawIcon, VolumeIcon } from './icons'
+import { FilmIcon, PawIcon, VolumeIcon } from './icons'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
@@ -16,7 +16,10 @@ export function HUD() {
   const giftHintAt = useJourney((s) => s.giftHintAt)
   const volume = useJourney((s) => s.volume)
   const audioOn = useJourney((s) => s.audioOn)
-  const { goTo, openGift, openSettings } = useJourney.getState()
+  const bonusStage = useJourney((s) => s.bonusStage)
+  const bonusLandedAt = useJourney((s) => s.bonusLandedAt)
+  const bonusIndex = useJourney((s) => s.bonusIndex)
+  const { goTo, openGift, openSettings, playBonus, tapBonus } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
   const [flowerToast, setFlowerToast] = useState<string | null>(null)
@@ -47,15 +50,27 @@ export function HUD() {
     return () => clearTimeout(t)
   }, [giftHintAt])
 
+  // Quà bóng bay vừa đáp xuống: gọi người xem bấm vào.
+  const [bonusToast, setBonusToast] = useState(false)
+  useEffect(() => {
+    if (!bonusLandedAt) return
+    setBonusToast(true)
+    const t = setTimeout(() => setBonusToast(false), 5000)
+    return () => clearTimeout(t)
+  }, [bonusLandedAt])
+
   if (phase !== 'journey' && phase !== 'gift') return null
 
   const count = visited.filter(Boolean).length
   const next = nextStationIndex(visited)
   const idle = targetIndex === null && openedIndex === null
 
+  // Quà bóng bay chưa mở mà nhân vật đang đứng cạnh: nút dưới cùng gợi ý mở quà trước.
+  const bonusWaiting = bonusStage === 'ready' && currentIndex === bonusIndex
   let action: { label: string; onClick: () => void; cls?: string } | null = null
   if (idle) {
-    if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
+    if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: tapBonus, cls: 'gift' }
+    else if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
     else if (next < STATION_COUNT) action = { label: `Đi tiếp → ${departments[next].name}`, onClick: () => goTo(next) }
     else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà\u00a0🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
   }
@@ -65,12 +80,16 @@ export function HUD() {
     toast = null
   } else if (giftHint) {
     toast = giftHint
+  } else if (bonusToast && bonusStage === 'ready') {
+    toast = 'Có quà bất ngờ! Bấm vào để mở nhé 🎈'
   } else if (flowerToast) {
     toast = flowerToast
   } else if (targetIndex !== null) {
     toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà...\u00a0🎁' : `Đang đi tới ${departments[targetIndex].name}...`
   } else if (count === 0 && currentIndex === -1) {
     toast = `Ghé thăm đủ ${STATION_COUNT} phòng ban để mở hộp quà bí mật\u00a0🎁`
+  } else if (bonusWaiting) {
+    toast = 'Bấm vào hộp quà bóng bay để mở nhé 🎈'
   } else if (phase === 'gift') {
     toast = 'Đủ hoa rồi! Bấm vào hộp quà nào 🎉'
   }
@@ -97,6 +116,16 @@ export function HUD() {
           <button className="icon-btn" onClick={() => openSettings('audio')} title="Âm lượng" aria-label="Âm lượng">
             <VolumeIcon level={audioOn ? volume : 0} />
           </button>
+          {bonusStage !== 'none' && (
+            <button
+              className={`icon-btn ${bonusStage === 'opened' ? '' : 'bonus-new'}`}
+              onClick={playBonus}
+              title="Xem video bất ngờ"
+              aria-label="Xem video bất ngờ"
+            >
+              <FilmIcon />
+            </button>
+          )}
         </div>
       </div>
 
@@ -115,7 +144,8 @@ export function HUD() {
       </AnimatePresence>
 
       <div className="hud-bottom">
-        <AnimatePresence>
+        {/* Đổi nút: nút cũ ẩn hẳn rồi nút mới mới hiện, tránh hai nút chen nhau trên màn hẹp. */}
+        <AnimatePresence mode="wait">
           {action && (
             <motion.button
               key={action.label}

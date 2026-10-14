@@ -7,6 +7,8 @@ import { useJourney } from '../store/useJourney'
 export function Outro() {
   const restart = useJourney((s) => s.restart)
   const playVideo = useJourney((s) => s.playVideo)
+  const playBonus = useJourney((s) => s.playBonus)
+  const hasBonus = useJourney((s) => s.bonusStage !== 'none')
 
   useEffect(() => {
     const end = Date.now() + 1800
@@ -34,6 +36,11 @@ export function Outro() {
           <button className="btn" onClick={playVideo}>
             Xem lại video 🎬
           </button>
+          {hasBonus && (
+            <button className="btn ghost" onClick={playBonus}>
+              Video bất ngờ 🎈
+            </button>
+          )}
           <button className="btn ghost" onClick={restart}>
             Đi lại từ đầu 🐾
           </button>

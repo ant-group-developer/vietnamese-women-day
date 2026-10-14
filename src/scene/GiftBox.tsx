@@ -42,9 +42,21 @@ function burst() {
 
 /**
  * Hộp quà Kenney Holiday Kit (present-a-cube): thân + nắp tách rời (node "lid").
- * lidRef trỏ vào nhóm bọc ngoài nắp để GiftBox tự di chuyển nắp khi mở.
+ * lidRef trỏ vào nhóm bọc ngoài nắp để GiftBox tự di chuyển nắp khi mở (toạ độ nắp tính theo đơn vị model, chưa nhân scale).
  */
-function Present({ color, ribbon, lidRef }: { color: string; ribbon: string; lidRef: React.RefObject<THREE.Group | null> }) {
+export function Present({
+  color,
+  ribbon,
+  lidRef,
+  scale = GIFT_SCALE,
+  y = 0.24,
+}: {
+  color: string
+  ribbon: string
+  lidRef: React.RefObject<THREE.Group | null>
+  scale?: number
+  y?: number
+}) {
   const { scene } = useGLTF(PRESENT_URL)
   const { body, lidNode, lidPos, material } = useMemo(() => {
     const root = scene.clone(true)
@@ -76,7 +88,7 @@ function Present({ color, ribbon, lidRef }: { color: string; ribbon: string; lid
   useEffect(() => () => material.dispose(), [material])
 
   return (
-    <group position={[0, 0.24, 0]} scale={GIFT_SCALE}>
+    <group position={[0, y, 0]} scale={scale}>
       <primitive object={body} />
       <group position={lidPos}>
         <group ref={lidRef}>

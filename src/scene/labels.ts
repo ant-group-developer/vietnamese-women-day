@@ -9,28 +9,32 @@ import * as THREE from 'three'
 interface LabelTarget {
   pos: THREE.Vector3
   el: HTMLElement | null
+  /** Cộng thêm vào z-index để nhãn quan trọng luôn nằm trên các nhãn khác. */
+  priority: number
 }
 
 const targets = new Map<string, LabelTarget>()
 const tmp = new THREE.Vector3()
 
-export function setLabelTarget(key: string, pos: THREE.Vector3) {
+export function setLabelTarget(key: string, pos: THREE.Vector3, priority = 0) {
   const t = targets.get(key)
-  if (t) t.pos = pos
-  else targets.set(key, { pos, el: null })
+  if (t) {
+    t.pos = pos
+    t.priority = priority
+  } else targets.set(key, { pos, el: null, priority })
 }
 
 export function bindLabelElement(key: string, el: HTMLElement | null) {
   const t = targets.get(key)
   if (t) t.el = el
-  else targets.set(key, { pos: new THREE.Vector3(), el })
+  else targets.set(key, { pos: new THREE.Vector3(), el, priority: 0 })
 }
 
 /** Đặt trong <Canvas>: chiếu toạ độ 3D sang pixel và gán transform cho từng nhãn. */
 export function LabelProjector() {
   const { camera, size } = useThree()
   useFrame(() => {
-    targets.forEach(({ pos, el }) => {
+    targets.forEach(({ pos, el, priority }) => {
       if (!el) return
       tmp.copy(pos).project(camera)
       const behind = tmp.z > 1
@@ -42,7 +46,7 @@ export function LabelProjector() {
       const fade = THREE.MathUtils.clamp((30 - dist) / 10, 0, 1)
       el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`
       el.style.opacity = behind ? '0' : fade.toFixed(2)
-      el.style.zIndex = String(Math.round(1000 - dist * 10))
+      el.style.zIndex = String(Math.round(1000 - dist * 10 + priority))
     })
   })
   return null

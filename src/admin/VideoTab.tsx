@@ -1,28 +1,89 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import type { VideoConfig } from '../data/siteData'
 import { youtubeEmbed } from '../utils/youtube'
 import { uploadFile } from './api'
 import type { TabProps } from './AdminApp'
 
 export function VideoTab({ data, update, onError }: TabProps) {
+  const { bonus } = data
+  const maxFlowers = data.departments.length
+
+  return (
+    <div className="stack">
+      <VideoEditor
+        title="Video quà cuối hành trình"
+        hint="Phát khi mở hộp quà sau khi đã thu thập đủ hoa. Nhạc nền tự tạm dừng trong lúc xem video."
+        emptyHint="Chưa có video. Website sẽ hiện thông báo và cho bấm “Tiếp tục”."
+        uploadName="gift"
+        video={data.video}
+        onChange={(video) => update((d) => ({ ...d, video }))}
+        onError={onError}
+      />
+
+      <VideoEditor
+        title="Video bất ngờ giữa hành trình 🎈"
+        hint="Khi thu thập đủ số bông hoa bên dưới, một hộp quà treo bóng bay rơi xuống cạnh nhân vật. Bấm vào hộp để xem video; sau đó xem lại được ở nút 🎬 trên thanh trên cùng."
+        emptyHint="Chưa có video. Quà bóng bay sẽ không xuất hiện."
+        uploadName="bonus"
+        video={bonus}
+        onChange={(video) => update((d) => ({ ...d, bonus: { ...d.bonus, ...video } }))}
+        onError={onError}
+      >
+        <label className="field">
+          <span>Số bông hoa để quà rơi xuống (1–{maxFlowers})</span>
+          <input
+            type="number"
+            min={1}
+            max={maxFlowers}
+            value={bonus.flowers}
+            onChange={(e) => {
+              const n = Math.round(Number(e.target.value))
+              if (!Number.isFinite(n)) return
+              update((d) => ({ ...d, bonus: { ...d.bonus, flowers: Math.min(maxFlowers, Math.max(1, n)) } }))
+            }}
+          />
+        </label>
+      </VideoEditor>
+    </div>
+  )
+}
+
+function VideoEditor({
+  title,
+  hint,
+  emptyHint,
+  uploadName,
+  video,
+  onChange,
+  onError,
+  children,
+}: {
+  title: string
+  hint: string
+  emptyHint: string
+  uploadName: string
+  video: VideoConfig
+  onChange: (v: VideoConfig) => void
+  onError: (e: unknown) => void
+  children?: ReactNode
+}) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [progress, setProgress] = useState<number | null>(null)
   /** Giữ link/ file của từng loại để đổi qua lại không bị mất. */
   const [drafts, setDrafts] = useState<Record<VideoConfig['type'], string>>(() => ({
-    mp4: data.video.type === 'mp4' ? data.video.src : '',
-    youtube: data.video.type === 'youtube' ? data.video.src : '',
+    mp4: video.type === 'mp4' ? video.src : '',
+    youtube: video.type === 'youtube' ? video.src : '',
   }))
-  const { video } = data
 
   const setVideo = (v: VideoConfig) => {
     setDrafts((d) => ({ ...d, [v.type]: v.src }))
-    update((d) => ({ ...d, video: v }))
+    onChange(v)
   }
 
   const pick = async (file: File) => {
     setProgress(0)
     try {
-      setVideo({ type: 'mp4', src: await uploadFile(file, 'video', 'gift', setProgress) })
+      setVideo({ type: 'mp4', src: await uploadFile(file, 'video', uploadName, setProgress) })
     } catch (e) {
       onError(e)
     } finally {
@@ -31,10 +92,11 @@ export function VideoTab({ data, update, onError }: TabProps) {
   }
 
   return (
-    <div className="stack">
+    <>
       <div className="card">
-        <h2>Video quà cuối hành trình</h2>
-        <p className="hint">Phát khi mở hộp quà sau khi đã thu thập đủ hoa. Nhạc nền tự tạm dừng trong lúc xem video.</p>
+        <h2>{title}</h2>
+        <p className="hint">{hint}</p>
+        {children}
         <div className="segmented">
           <button className={video.type === 'mp4' ? 'active' : ''} onClick={() => setVideo({ type: 'mp4', src: drafts.mp4 })}>
             🎬 File video (mp4)
@@ -84,13 +146,13 @@ export function VideoTab({ data, update, onError }: TabProps) {
       <div className="card">
         <h2>Xem trước</h2>
         {!video.src ? (
-          <p className="hint">Chưa có video. Website sẽ hiện thông báo và cho bấm “Tiếp tục”.</p>
+          <p className="hint">{emptyHint}</p>
         ) : video.type === 'youtube' ? (
           <iframe className="preview" src={youtubeEmbed(video.src, false)} title="Xem trước" allow="encrypted-media; fullscreen" allowFullScreen />
         ) : (
           <video className="preview" src={video.src} controls preload="metadata" />
         )}
       </div>
-    </div>
+    </>
   )
 }

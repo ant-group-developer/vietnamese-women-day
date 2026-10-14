@@ -7,6 +7,7 @@ import { PathMesh } from './PathMesh'
 import { Station } from './Station'
 import { Character } from './Character'
 import { GiftBox } from './GiftBox'
+import { BonusGift } from './BonusGift'
 import { Clouds, Decor } from './Decor'
 import { CAMERA_OFFSET, CameraRig } from './CameraRig'
 import { layout } from './path'
@@ -59,6 +60,7 @@ export function Scene() {
             <Station key={d.slug} index={i} dept={d} />
           ))}
           <GiftBox />
+          <BonusGift />
           <Character />
         </Suspense>
         <CameraRig />

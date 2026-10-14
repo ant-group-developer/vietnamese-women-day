@@ -5,6 +5,7 @@ Website 3D vui nhộn: một bạn đồng hành nhỏ dẫn người xem đi qu
 - Bấm vào bất kỳ ngôi nhà nào (không cần theo thứ tự), nhân vật sẽ chạy tới đó và mở thiệp giới thiệu phòng ban.
 - Kéo chuột/ngón tay để xoay bản đồ, cuộn chuột hoặc chụm hai ngón để zoom. Nút 🎯 đưa camera về sau nhân vật.
 - Nút "Đi tiếp" gợi ý phòng ban chưa thăm gần nhất. Thăm đủ mọi phòng thì hộp quà mở khoá.
+- Quà bất ngờ giữa đường: khi có đủ số bông hoa cấu hình ở /admin (mặc định 4), một hộp quà treo chùm bóng bay rơi xuống cạnh nhân vật. Bấm vào thì bóng bay bay đi, hộp mở và phát video bất ngờ; sau đó xem lại ở nút 🎬 trên thanh trên cùng (hoặc nút "Video bất ngờ" ở màn kết thúc). Chưa có video bất ngờ thì quà không xuất hiện.
 - Cụm nút góc phải dưới: phóng to, thu nhỏ, xoay trái/phải, về nhân vật, mở lại hướng dẫn. Hướng dẫn hiện lần đầu vào; tích "Không hiển thị lại" thì lưu trong localStorage của trình duyệt.
 - Khi vào web sẽ chọn nhân vật dẫn đường (18 con, mặc định Gấu Mèo), lựa chọn lưu trong localStorage; tích "Không hiển thị lại lần sau" thì các lần sau bỏ qua màn chọn. Đổi nhân vật ở nút 🐾, chỉnh âm lượng ở nút loa. Nhân vật là model GLB có animation:
   - Bộ Cozy Animals của Gamideo (`assets/Gamideo_cozy_animals`), texture đã thu về 1024px cho nhẹ, đặt trong `public/models/cozy`; ảnh thẻ chọn cắt từ `preview.png` của bộ, đặt trong `public/images/characters`. Rùa, hải cẩu chỉ có animation bơi; vẹt, chim ruồi bay lơ lửng.
@@ -46,7 +47,7 @@ Rồi mở http://localhost:5280/admin. `npm run dev` tự chạy các API trong
 
 - Ảnh nhân viên được thu nhỏ về tối đa 800px ngay trên trình duyệt trước khi upload. Nút **Thêm nhiều từ ảnh** lấy tên file làm tên người.
 - Nhạc nền phát lần lượt theo danh sách, hết bài cuối thì quay lại đầu (có tuỳ chọn xáo bài).
-- Video quà: upload mp4 hoặc dán link YouTube.
+- Video quà và video bất ngờ: upload mp4 hoặc dán link YouTube (cùng ở tab Video).
 - Mỗi lần lưu tạo một file `config/site-<thời gian>.json` trên Blob, giữ lại 10 bản gần nhất.
 
 ## Dữ liệu mặc định (khi chưa lưu gì trên /admin)
