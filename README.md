@@ -52,7 +52,7 @@ Rồi mở http://localhost:5173/admin. `npm run dev` tự chạy các API trong
 ## Dữ liệu mặc định (khi chưa lưu gì trên /admin)
 
 - Phòng ban: `src/data/departments.json` (có thể sinh bằng `python scripts/import-photos.py raw-photos`, ảnh nằm ở `public/images/<slug>/`).
-- Nhạc nền: `public/audio/bgm.mp3`. Video: `public/video/gift.mp4`.
+- Nhạc nền: bài "Carefree" trên R2 (khai báo trong `src/data/siteData.ts`). Video: `public/video/gift.mp4`.
 - Hiệu ứng âm thanh (luôn lấy từ `public/audio/`): `step.mp3`, `pop.mp3`, `gift.mp3`. Thiếu file nào thì bỏ qua.
 
 ## Tiêu đề, tên công ty, lời chúc cuối

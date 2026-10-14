@@ -136,7 +136,7 @@ export function parseSiteData(input: unknown): SiteData {
       url: url(o.url, `Bài nhạc #${i + 1} – file`),
     }
   })
-  const volume = typeof m.volume === 'number' && Number.isFinite(m.volume) ? Math.min(1, Math.max(0, m.volume)) : 0.35
+  const volume = typeof m.volume === 'number' && Number.isFinite(m.volume) ? Math.min(1, Math.max(0, m.volume)) : 0.15
 
   const v = obj(root.video ?? {}, 'Video')
   const type = v.type === 'youtube' ? 'youtube' : 'mp4'

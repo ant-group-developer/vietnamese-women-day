@@ -8,9 +8,15 @@ export const defaultSiteData: SiteData = {
   version: 1,
   departments: raw.departments as Department[],
   music: {
-    tracks: [{ id: 'default', title: 'Nhạc nền', url: '/audio/bgm.mp3' }],
+    tracks: [
+      {
+        id: 'default',
+        title: 'Carefree',
+        url: 'https://pub-f692d310eeed42d99d90cd6bcdd7a979.r2.dev/vietnamese-women-day/audio/carefree-f7G23nzBWCotiNEFXyxq7ut2tVe8V2.mp3',
+      },
+    ],
     shuffle: false,
-    volume: 0.35,
+    volume: 0.15,
   },
   video: { type: 'mp4', src: '/video/gift.mp4' },
 }
