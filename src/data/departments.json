@@ -79,24 +79,12 @@
       "message": "Năng lượng tràn đầy, chinh phục mọi mục tiêu.",
       "members": [
         {
-          "name": "Lưu An Lành",
-          "photo": "/images/phong-am3/luu-an-lanh.jpg"
-        },
-        {
           "name": "Lưu Thúy Anh",
           "photo": "/images/phong-am3/luu-thuy-anh.jpg"
         },
         {
-          "name": "Nguyễn Bích Ngọc",
-          "photo": "/images/phong-am3/nguyen-bich-ngoc.jpg"
-        },
-        {
           "name": "Nguyễn Quỳnh Nhung",
           "photo": "/images/phong-am3/nguyen-quynh-nhung.jpg"
-        },
-        {
-          "name": "Phạm Diệu Anh",
-          "photo": "/images/phong-am3/pham-dieu-anh.jpg"
         },
         {
           "name": "Phạm Diệu Vi",
