@@ -48,6 +48,8 @@ let bgm: Howl | null = null
 let wanted = false
 /** Số bài lỗi liên tiếp; lỗi hết cả danh sách thì thôi không thử nữa. */
 let failStreak = 0
+/** Người dùng đang ở tab khác (hoặc thu nhỏ trình duyệt): tạm dừng nhạc nền. */
+let tabHidden = typeof document !== 'undefined' && document.hidden
 
 function buildOrder() {
   const { tracks, shuffle } = siteData.music
@@ -82,7 +84,7 @@ function loadTrack(): Howl | null {
     },
     onplayerror: () => {
       h.once('unlock', () => {
-        if (bgm === h && wanted) h.play()
+        if (bgm === h && wanted && !tabHidden) h.play()
       })
     },
   })
@@ -100,7 +102,7 @@ function nextTrack() {
 export function startBgm() {
   wanted = true
   if (!bgm) bgm = loadTrack()
-  if (!bgm || bgm.playing()) return
+  if (!bgm || bgm.playing() || tabHidden) return
   bgm.play()
 }
 
@@ -118,8 +120,19 @@ export function bindAudioToStore() {
   const { audioOn, volume } = useJourney.getState()
   Howler.volume(volume)
   apply(audioOn)
-  return useJourney.subscribe((s, prev) => {
+  // Chỉ phát nhạc nền khi người dùng đang ở trong tab; rời tab thì tạm dừng, quay lại thì phát tiếp.
+  const onVisibility = () => {
+    tabHidden = document.hidden
+    if (tabHidden) bgm?.pause()
+    else if (wanted) startBgm()
+  }
+  document.addEventListener('visibilitychange', onVisibility)
+  const unsub = useJourney.subscribe((s, prev) => {
     if (s.volume !== prev.volume) Howler.volume(s.volume)
     if (s.audioOn !== prev.audioOn) apply(s.audioOn)
   })
+  return () => {
+    unsub()
+    document.removeEventListener('visibilitychange', onVisibility)
+  }
 }

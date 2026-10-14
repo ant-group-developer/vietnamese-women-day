@@ -48,6 +48,8 @@ export default defineConfig(({ mode }) => {
   for (const [k, v] of Object.entries(loadEnv(mode, process.cwd(), ''))) process.env[k] ??= v
   return {
     plugins: [react(), devApi()],
+    server: { port: 5280 },
+    preview: { port: 5280 },
     build: {
       rollupOptions: {
         // Trang chính + trang cấu hình /admin (bundle riêng, không kéo three.js).

@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Mở địa chỉ hiện trên terminal (thường là http://localhost:5173).
+Mở địa chỉ hiện trên terminal (mặc định http://localhost:5280).
 
 ## Trang cấu hình /admin
 
@@ -40,7 +40,7 @@ vercel env pull .env.local
 npm run dev
 ```
 
-Rồi mở http://localhost:5173/admin. `npm run dev` tự chạy các API trong `api/` bằng biến trong `.env.local` (xem `.env.example`).
+Rồi mở http://localhost:5280/admin. `npm run dev` tự chạy các API trong `api/` bằng biến trong `.env.local` (xem `.env.example`).
 
 ### Ghi chú
 
