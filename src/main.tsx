@@ -1,3 +1,4 @@
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { fetchSiteData, setSiteData } from './data/siteData'
@@ -9,7 +10,12 @@ async function boot() {
   if (data) setSiteData(data)
   const { default: App } = await import('./App')
   // Không dùng StrictMode: drei <Html> tạo root React riêng và StrictMode (mount 2 lần) gây cảnh báo unmount.
-  createRoot(document.getElementById('root')!).render(<App />)
+  createRoot(document.getElementById('root')!).render(
+    <>
+      <App />
+      <SpeedInsights />
+    </>,
+  )
 }
 
 void boot()
