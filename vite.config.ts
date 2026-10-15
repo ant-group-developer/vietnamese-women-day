@@ -61,11 +61,21 @@ function siteUrl(): Plugin {
   }
 }
 
+/**
+ * Link công khai của config/site.json trên Vercel Blob (xem api/config.ts), để web chính đọc thẳng.
+ * Suy ra từ id store nằm trong token (`vercel_blob_rw_<id>_<bí mật>`), không đưa phần bí mật vào bundle.
+ */
+function blobConfigUrl(): string {
+  const id = process.env.BLOB_READ_WRITE_TOKEN?.split('_')[3] || process.env.BLOB_STORE_ID?.replace(/^store_/, '')
+  return id ? `https://${id.toLowerCase()}.public.blob.vercel-storage.com/config/site.json` : ''
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   for (const [k, v] of Object.entries(loadEnv(mode, process.cwd(), ''))) process.env[k] ??= v
   return {
     plugins: [react(), devApi(), siteUrl()],
+    define: { 'import.meta.env.VITE_CONFIG_URL': JSON.stringify(blobConfigUrl()) },
     server: { port: 5280 },
     preview: { port: 5280 },
     build: {

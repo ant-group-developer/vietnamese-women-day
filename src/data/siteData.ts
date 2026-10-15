@@ -32,16 +32,27 @@ export function setSiteData(data: SiteData) {
   siteData = data
 }
 
-/** Tải cấu hình từ /api/config; trả null nếu chưa có hoặc lỗi. */
+/** Link công khai của config/site.json trên Blob (điền lúc build, xem vite.config.ts). */
+const CONFIG_URL: string = import.meta.env.VITE_CONFIG_URL ?? ''
+
+async function load(url: string, signal: AbortSignal): Promise<SiteData | null> {
+  try {
+    const res = await fetch(url, { signal, cache: 'no-store' })
+    return res.ok ? parseSiteData(await res.json()) : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Tải cấu hình: đọc thẳng file trên Blob (CDN cache 60s, không tốn lượt `list` của Blob);
+ * chưa có file đó hoặc lỗi thì hỏi /api/config. Trả null nếu chưa có cấu hình hoặc lỗi.
+ */
 export async function fetchSiteData(timeoutMs = 5000): Promise<SiteData | null> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {
-    const res = await fetch('/api/config', { signal: ctrl.signal, cache: 'no-store' })
-    if (!res.ok) return null
-    return parseSiteData(await res.json())
-  } catch {
-    return null
+    return (CONFIG_URL && (await load(CONFIG_URL, ctrl.signal))) || (await load('/api/config', ctrl.signal))
   } finally {
     clearTimeout(timer)
   }

@@ -24,7 +24,7 @@ Mở địa chỉ hiện trên terminal (mặc định http://localhost:5280).
 
 ## Trang cấu hình /admin
 
-Phòng ban, nhân viên (kèm ảnh), danh sách nhạc nền và video quà được chỉnh ở **`/admin`** (vd: `https://ten-mien.vercel.app/admin`), lưu trên Vercel Blob. Bấm **Lưu** là trang chính dùng ngay ở lần tải tiếp theo, không cần deploy lại.
+Phòng ban, nhân viên (kèm ảnh), danh sách nhạc nền và video quà được chỉnh ở **`/admin`** (vd: `https://ten-mien.vercel.app/admin`), lưu trên Vercel Blob. Bấm **Lưu** là trang chính cập nhật sau khoảng 1–3 phút (do CDN cache), không cần deploy lại. Trang chính đọc thẳng file `config/site.json` trên Blob nên lượt xem không tốn lượt `list` (Advanced Operations) của Blob; mỗi lần lưu vẫn giữ bản sao `config/site-<thời gian>.json` (10 bản gần nhất) để khôi phục.
 
 ### Cài đặt một lần trên Vercel
 
