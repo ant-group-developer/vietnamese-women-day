@@ -2,20 +2,146 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+    <title>Chúc mừng ngày Phụ nữ Việt Nam 20/10 🌸 – Hành trình thu thập hoa</title>
+    <meta name="description" content="Chúc mừng ngày Phụ nữ Việt Nam 20/10! Cùng bạn đồng hành nhỏ dạo quanh hòn đảo hoa 3D, ghé thăm từng phòng ban, gặp gỡ các chị em, thu đủ hoa để mở hộp quà bất ngờ." />
+    <meta name="keywords" content="20/10, ngày Phụ nữ Việt Nam, chúc mừng 20/10, thiệp 20/10, quà 20/10, hành trình thu thập hoa" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#ffd6e7" />
-    <title>Chúc mừng ngày 20/10 🌸</title>
+    <meta name="color-scheme" content="light" />
+    <link rel="canonical" href="%SITE_URL%/" />
+
+    <link rel="icon" type="image/png" sizes="160x160" href="/logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- Open Graph (Facebook, Zalo, Messenger...) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content="Chúc mừng 20/10" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:title" content="Chúc mừng ngày Phụ nữ Việt Nam 20/10 🌸" />
+    <meta property="og:description" content="Chúc bạn một ngày 20/10 thật ý nghĩa, xinh đẹp, tuyệt vời và ngập tràn hạnh phúc! Ghé đảo hoa 3D, thu đủ hoa để mở hộp quà bất ngờ." />
+    <meta property="og:image" content="%SITE_URL%/og-image.jpg" />
+    <meta property="og:image:secure_url" content="%SITE_URL%/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Thiệp 20/10 hoa hồng: Chúc bạn một ngày 20/10 thật là ý nghĩa, rất xinh đẹp tuyệt vời, ngập tràn hạnh phúc" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chúc mừng ngày Phụ nữ Việt Nam 20/10 🌸" />
+    <meta name="twitter:description" content="Chúc bạn một ngày 20/10 thật ý nghĩa, xinh đẹp, tuyệt vời và ngập tràn hạnh phúc!" />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.jpg" />
+    <meta name="twitter:image:alt" content="Thiệp 20/10 hoa hồng" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Chúc mừng ngày Phụ nữ Việt Nam 20/10",
+        "url": "%SITE_URL%/",
+        "inLanguage": "vi-VN",
+        "description": "Website 3D chúc mừng ngày Phụ nữ Việt Nam 20/10: dạo quanh đảo hoa, thăm các phòng ban và mở hộp quà bất ngờ.",
+        "image": "%SITE_URL%/og-image.jpg"
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      /* Màn chờ trước khi React chạy, giống màn mở đầu (.intro trong src/index.css) — React thay toàn bộ #root khi render. */
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        text-align: center;
+        background: radial-gradient(circle at 50% 30%, #fff0f6 0%, #ffd9e8 45%, #cfeaff 100%);
+        color: #5a2d44;
+        font-family: 'Baloo 2', 'Segoe UI', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .boot-card { max-width: 560px; }
+      .boot-mascot {
+        font-size: clamp(72px, 16vw, 120px);
+        line-height: 1;
+        margin: 0 auto 10px;
+        width: max-content;
+        animation: boot-bob 2.2s ease-in-out infinite;
+      }
+      .boot-badge {
+        display: inline-block;
+        background: #fff;
+        color: #f0558a;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        box-shadow: 0 6px 18px rgba(240, 85, 138, 0.15);
+        margin-bottom: 12px;
+      }
+      .boot h1 {
+        font-size: clamp(36px, 8vw, 64px);
+        line-height: 1.05;
+        margin: 8px 0;
+        color: #f0558a;
+        text-shadow: 0 4px 0 #fff, 0 10px 24px rgba(240, 85, 138, 0.25);
+      }
+      .boot p {
+        font-size: clamp(16px, 3vw, 20px);
+        margin: 8px 0 24px;
+        color: #7a2d4e;
+        text-wrap: balance;
+      }
+      .boot-loading {
+        font-size: clamp(18px, 3vw, 22px);
+        font-weight: 700;
+        color: #f0558a;
+      }
+      .boot-loading i {
+        font-style: normal;
+        animation: boot-blink 1.2s infinite;
+      }
+      .boot-loading i:nth-child(2) { animation-delay: 0.2s; }
+      .boot-loading i:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes boot-bob {
+        0%, 100% { transform: translateY(0) rotate(0); }
+        33% { transform: translateY(-9px) rotate(-6deg); }
+        50% { transform: translateY(-14px) rotate(0); }
+        66% { transform: translateY(-9px) rotate(6deg); }
+      }
+      @keyframes boot-blink {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 1; }
+      }
+      @media (max-height: 500px) {
+        .boot { padding: 12px 24px; }
+        .boot-mascot { font-size: 56px; margin-bottom: 4px; }
+        .boot h1 { font-size: 34px; margin: 4px 0; }
+        .boot p { margin: 4px 0 12px; }
+        .boot-badge { margin-bottom: 6px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-mascot, .boot-loading i { animation: none; }
+      }
+    </style>
   </head>
   <body>
     <div id="root">
-      <div style="position:fixed;inset:0;display:grid;place-items:center;background:#ffe4ef;color:#c2185b;font:600 18px 'Baloo 2',sans-serif">
-        🌸 Đang tải...
+      <div class="boot" role="status" aria-live="polite">
+        <div class="boot-card">
+          <div class="boot-mascot" aria-hidden="true">🌸</div>
+          <div class="boot-badge">ANT Group · 20/10</div>
+          <h1>Chúc mừng ngày 20/10</h1>
+          <p>Hành trình thu thập hoa tặng các chị em 🌸</p>
+          <div class="boot-loading">Đang tải<span aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></div>
+        </div>
       </div>
     </div>
+    <noscript>Chúc mừng ngày Phụ nữ Việt Nam 20/10! Vui lòng bật JavaScript để xem thiệp và hành trình thu thập hoa.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

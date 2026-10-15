@@ -43,11 +43,29 @@ function devApi(): Plugin {
   }
 }
 
+/**
+ * Điền `%SITE_URL%` trong index.html (canonical, og:url, og:image...) — mạng xã hội cần URL tuyệt đối.
+ * Lấy từ SITE_URL nếu có, không thì tên miền production Vercel tự cấp lúc build; không có thì để trống (URL tương đối).
+ */
+function siteUrl(): Plugin {
+  return {
+    name: 'site-url',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        const host = process.env.VERCEL_PROJECT_PRODUCTION_URL
+        const url = (process.env.SITE_URL || (host ? `https://${host}` : '')).replace(/\/+$/, '')
+        return html.replaceAll('%SITE_URL%', url)
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   for (const [k, v] of Object.entries(loadEnv(mode, process.cwd(), ''))) process.env[k] ??= v
   return {
-    plugins: [react(), devApi()],
+    plugins: [react(), devApi(), siteUrl()],
     server: { port: 5280 },
     preview: { port: 5280 },
     build: {
