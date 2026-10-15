@@ -18,8 +18,11 @@ export const defaultSiteData: SiteData = {
     shuffle: false,
     volume: 0.15,
   },
-  video: { type: 'mp4', src: '/video/gift.mp4' },
-  bonuses: [],
+  video: { type: 'youtube', src: 'https://youtu.be/_i_wbXld_78' },
+  bonuses: [
+    { id: 'b1', type: 'youtube', src: 'https://youtu.be/_i_wbXld_78', flowers: 2, title: 'Phần quà 1' },
+    { id: 'bmv98lyhk', type: 'youtube', src: 'https://youtu.be/VQO2QAs4Uko', flowers: 5, title: 'Phần quà 2' },
+  ],
 }
 
 /** Cấu hình đang dùng. Được gán 1 lần trong main.tsx trước khi import App. */
