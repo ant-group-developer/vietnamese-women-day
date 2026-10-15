@@ -1,81 +1,143 @@
-import { useEffect } from 'react'
-import { STATION_COUNT } from '../data/departments'
-import { useJourney } from '../store/useJourney'
-import { layout, stationT } from './path'
-import { isMobile } from './utils'
+import { useEffect } from "react";
+import { STATION_COUNT } from "../data/departments";
+import { useJourney } from "../store/useJourney";
+import { layout, stationT } from "./path";
+import { isMobile } from "./utils";
 
 /** Điều khiển bằng bàn phím (chỉ trên máy tính): giữ ← → hoặc A D để đi dọc đường. */
-export const keyboardEnabled = !isMobile && typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
+export const keyboardEnabled =
+    !isMobile &&
+    typeof window !== "undefined" &&
+    window.matchMedia("(pointer: fine)").matches;
 
 /** Hướng đi do bàn phím: -1 lùi, 1 tiến, 0 đứng yên. Character đọc mỗi frame. */
-export const keyboard = { dir: 0 }
+export const keyboard = { dir: 0 };
 
 /** Khoảng cách để coi là đứng đúng tại trạm (cập nhật currentIndex). */
-const AT = 0.35
+const AT = 0.35;
 
 /** Trạm (kể cả hộp quà) gần vị trí t nhất trong phạm vi `range` mét, -1 nếu không có. */
 export function stationNear(t: number, range: number): number {
-  let best = -1
-  let bestD = range / layout.length
-  for (let i = 0; i <= STATION_COUNT; i++) {
-    const d = Math.abs(stationT(i) - t)
-    if (d <= bestD) {
-      bestD = d
-      best = i
+    let best = -1;
+    let bestD = range / layout.length;
+    for (let i = 0; i <= STATION_COUNT; i++) {
+        const d = Math.abs(stationT(i) - t);
+        if (d <= bestD) {
+            bestD = d;
+            best = i;
+        }
     }
-  }
-  return best
+    return best;
 }
 
 export function stationAt(t: number): number {
-  return stationNear(t, AT)
+    return stationNear(t, AT);
 }
 
 /** Có đang được phép điều khiển nhân vật không (không mở popup, tour, cài đặt...). */
 export function canControl(): boolean {
-  const s = useJourney.getState()
-  return (s.phase === 'journey' || s.phase === 'gift') && s.openedIndex === null && !s.tourOpen && !s.settingsOpen
+    const s = useJourney.getState();
+    return (
+        (s.phase === "journey" || s.phase === "gift") &&
+        s.openedIndex === null &&
+        !s.tourOpen &&
+        !s.settingsOpen
+    );
 }
 
-const LEFT = new Set(['ArrowLeft', 'KeyA'])
-const RIGHT = new Set(['ArrowRight', 'KeyD'])
+const LEFT = new Set(["ArrowLeft", "KeyA"]);
+const RIGHT = new Set(["ArrowRight", "KeyD"]);
+/** Ký tự bộ gõ tiếng Việt (Telex/VNI) chèn ra khi giữ A/D, vd. "aa" → "â", "dd" → "đ"; sự kiện đó thường không có code. */
+const LEFT_CHARS = new Set(["a", "â", "ă", "á", "à", "ả", "ã", "ạ"]);
+const RIGHT_CHARS = new Set(["d", "đ"]);
+/**
+ * Chờ một chút sau khi nhả phím mới dừng, phòng khi bộ gõ tiếng Việt chen cặp nhả/nhấn giả
+ * vào giữa lúc đang giữ phím (dừng ngay thì nhân vật bị khựng).
+ */
+const RELEASE_DELAY = 120;
+
+/** Quy về KeyA/KeyD/ArrowLeft/ArrowRight, kể cả sự kiện do bộ gõ chèn (code rỗng, key là ký tự đã ghép). */
+function moveCode(e: KeyboardEvent): string | null {
+    if (LEFT.has(e.code) || RIGHT.has(e.code)) return e.code;
+    const k = e.key?.toLowerCase();
+    if (!e.code || e.code === "Unidentified" || e.key === "Process") {
+        if (LEFT_CHARS.has(k)) return "KeyA";
+        if (RIGHT_CHARS.has(k)) return "KeyD";
+    }
+    return null;
+}
 
 export function useKeyboardControls() {
-  useEffect(() => {
-    if (!keyboardEnabled) return
-    const held = new Set<string>()
-    const update = () => {
-      keyboard.dir = ([...held].some((k) => RIGHT.has(k)) ? 1 : 0) - ([...held].some((k) => LEFT.has(k)) ? 1 : 0)
-    }
-    const typing = (e: KeyboardEvent) => {
-      const el = e.target
-      return el instanceof HTMLElement && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
-    }
-    const onDown = (e: KeyboardEvent) => {
-      if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return
-      if (LEFT.has(e.code) || RIGHT.has(e.code)) {
-        if (!canControl()) return
-        e.preventDefault()
-        held.add(e.code)
-        update()
-      }
-    }
-    const onUp = (e: KeyboardEvent) => {
-      held.delete(e.code)
-      update()
-    }
-    const clear = () => {
-      held.clear()
-      update()
-    }
-    window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup', onUp)
-    window.addEventListener('blur', clear)
-    return () => {
-      window.removeEventListener('keydown', onDown)
-      window.removeEventListener('keyup', onUp)
-      window.removeEventListener('blur', clear)
-      clear()
-    }
-  }, [])
+    useEffect(() => {
+        if (!keyboardEnabled) return;
+        const held = new Set<string>();
+        const releases = new Map<string, number>();
+        let shiftHeld = false;
+        const update = () => {
+            keyboard.dir =
+                ([...held].some((k) => RIGHT.has(k)) ? 1 : 0) -
+                ([...held].some((k) => LEFT.has(k)) ? 1 : 0);
+        };
+        const typing = (e: KeyboardEvent) => {
+            const el = e.target;
+            return (
+                el instanceof HTMLElement &&
+                (el.tagName === "INPUT" ||
+                    el.tagName === "TEXTAREA" ||
+                    el.tagName === "SELECT" ||
+                    el.isContentEditable)
+            );
+        };
+        const cancelRelease = (code: string) => {
+            const id = releases.get(code);
+            if (id !== undefined) {
+                clearTimeout(id);
+                releases.delete(code);
+            }
+        };
+        const onDown = (e: KeyboardEvent) => {
+            if (e.key === "Shift") shiftHeld = true;
+            if (typing(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+            const code = moveCode(e);
+            if (!code) return;
+            // Bộ gõ tiếng Việt (EVKey, Unikey...) khi ghép chữ tự gửi Shift + ← để chọn ký tự cũ rồi
+            // Backspace và gõ lại: phím ← giả đó không phải người chơi bấm, bỏ qua kẻo triệt tiêu phím D.
+            if (code.startsWith("Arrow") && (e.shiftKey || shiftHeld)) return;
+            if (!canControl()) return;
+            e.preventDefault();
+            cancelRelease(code);
+            held.add(code);
+            update();
+        };
+        const onUp = (e: KeyboardEvent) => {
+            if (e.key === "Shift") shiftHeld = false;
+            const code = moveCode(e);
+            if (!code || !held.has(code)) return;
+            cancelRelease(code);
+            releases.set(
+                code,
+                window.setTimeout(() => {
+                    releases.delete(code);
+                    held.delete(code);
+                    update();
+                }, RELEASE_DELAY),
+            );
+        };
+        const clear = () => {
+            shiftHeld = false;
+            releases.forEach((id) => clearTimeout(id));
+            releases.clear();
+            held.clear();
+            update();
+        };
+        window.addEventListener("keydown", onDown);
+        window.addEventListener("keyup", onUp);
+        window.addEventListener("blur", clear);
+        return () => {
+            window.removeEventListener("keydown", onDown);
+            window.removeEventListener("keyup", onUp);
+            window.removeEventListener("blur", clear);
+            clear();
+        };
+    }, []);
 }
