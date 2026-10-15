@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { bonusAtStation, bonusTitle, droppedBonuses, nextStationIndex, useJourney } from '../store/useJourney'
 import { FilmIcon, PawIcon, VolumeIcon } from './icons'
+import { keyboardEnabled } from '../scene/keyboard'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
@@ -178,6 +179,14 @@ export function HUD() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {keyboardEnabled && !tourOpen && (
+        <div className="kbd-hint" aria-hidden>
+          <kbd>←</kbd>
+          <kbd>→</kbd>/ <kbd>A</kbd>
+          <kbd>D</kbd> di chuyển
+        </div>
+      )}
 
       <div className="hud-bottom">
         {/* Đổi nút: nút cũ ẩn hẳn rồi nút mới mới hiện, tránh hai nút chen nhau trên màn hẹp. */}

@@ -15,6 +15,7 @@ import { SettingsModal } from './ui/SettingsModal'
 import { BONUSES, bonusTitle, useJourney } from './store/useJourney'
 import { bindAudioToStore } from './audio/sound'
 import { siteData } from './data/siteData'
+import { useKeyboardControls } from './scene/keyboard'
 
 export default function App() {
   const phase = useJourney((s) => s.phase)
@@ -23,6 +24,7 @@ export default function App() {
   const bonusPlaying = useJourney((s) => s.bonusPlaying)
 
   useEffect(() => bindAudioToStore(), [])
+  useKeyboardControls()
 
   // Chỉ khi dev: cho phép xem/sửa trạng thái từ console (window.__journey).
   useEffect(() => {

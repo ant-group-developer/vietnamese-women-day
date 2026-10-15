@@ -4,7 +4,8 @@ import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { layout, seededRandom } from './path'
 import { isMobile } from './utils'
-import { CLOUD_URLS, fitMatrix, getParts, natureUrl, PALETTE, remapMaterial } from './envAssets'
+import { isReserved } from './landmarks'
+import { BLOSSOM, CLOUD_URLS, fitMatrix, getParts, natureUrl, PALETTE, remapMaterial } from './envAssets'
 
 type DecorKind = 'tree' | 'bush' | 'flower' | 'grass' | 'rock' | 'mushroom' | 'stump'
 
@@ -24,9 +25,6 @@ const KINDS: Record<DecorKind, { models: string[]; size: number }> = {
   mushroom: { models: ['mushroom_red', 'mushroom_redGroup', 'mushroom_tan', 'mushroom_tanGroup', 'mushroom_redTall'], size: 0.5 },
   stump: { models: ['stump_round', 'log'], size: 0.7 },
 }
-
-/** Cây hoa anh đào hồng: chỉ đổi màu lá. */
-const BLOSSOM: Record<string, string> = { ...PALETTE, leafsGreen: '#ffb3c6', leafsDark: '#ff9fbf' }
 
 Object.values(KINDS).forEach((k) => k.models.forEach((m) => useGLTF.preload(natureUrl(m))))
 
@@ -65,6 +63,7 @@ function buildDecor(): DecorItem[] {
     if (samples.some((s) => s.distanceToSquared(p) < 1.9 * 1.9)) continue
     if (houses.some((h) => h.distanceToSquared(p) < 2.6 * 2.6)) continue
     if (bonusSpots.some((b) => b.distanceToSquared(p) < 1.5 * 1.5)) continue
+    if (isReserved(p, 0.4)) continue
     if (items.some((it) => (it.pos[0] - x) ** 2 + (it.pos[2] - z) ** 2 < 0.8)) continue
     const k = rnd()
     const kind: DecorKind =

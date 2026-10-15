@@ -8,7 +8,7 @@ import { housePosition, layout, mascot } from './path'
 import { damp } from './utils'
 import { cameraCmd, cameraFocus } from './cameraControl'
 
-export const CAMERA_OFFSET = new THREE.Vector3(3, 10.2, 12)
+export const CAMERA_OFFSET = new THREE.Vector3(3.6, 12.2, 14.4)
 const GIFT_OFFSET = new THREE.Vector3(0, 5.5, 9)
 
 const focus = new THREE.Vector3()

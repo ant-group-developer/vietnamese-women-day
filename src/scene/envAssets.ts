@@ -7,6 +7,7 @@
  * Đơn vị: 1 ô = 1 mét, mặt trước hướng +Z.
  */
 import * as THREE from 'three'
+import type { Placement } from './Decor'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export const ENV = '/models/env'
@@ -178,3 +179,32 @@ export function mergePieces(scenes: Record<string, THREE.Object3D>, pieces: Piec
   geos.forEach((g) => g.dispose())
   return merged
 }
+
+/** Nhiều bản sao của nhiều model, gom theo model để vẽ instanced. */
+export interface Batch {
+  url: string
+  size: number
+  items: Placement[]
+  palette?: Record<string, string>
+  paletteKey?: string
+}
+
+export class BatchSet {
+  private map = new Map<string, Batch>()
+  add(url: string, size: number, p: Placement, palette = PALETTE, paletteKey = 'base') {
+    const key = `${url}|${size}|${paletteKey}`
+    let b = this.map.get(key)
+    if (!b) {
+      b = { url, size, items: [], palette, paletteKey }
+      this.map.set(key, b)
+    }
+    b.items.push(p)
+  }
+  get list() {
+    return [...this.map.values()]
+  }
+}
+
+/** Cây anh đào: chỉ đổi màu lá. */
+export const BLOSSOM: Record<string, string> = { ...PALETTE, leafsGreen: '#ffb3c6', leafsDark: '#ff9fbf' }
+export const FLOWERS = ['flower_redA', 'flower_redB', 'flower_purpleA', 'flower_purpleC', 'flower_yellowA', 'flower_yellowB']

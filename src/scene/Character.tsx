@@ -2,7 +2,9 @@ import { Suspense, useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { useJourney } from '../store/useJourney'
+import { isStationAvailable, useJourney } from '../store/useJourney'
+import { GIFT_INDEX } from '../data/departments'
+import { canControl, keyboard, stationAt } from './keyboard'
 import { layout, mascot, stationT } from './path'
 import { playStep } from '../audio/sound'
 import { CHARACTERS, type CharacterSpec } from './characters'
@@ -113,7 +115,25 @@ export function Character() {
     const target = targetIndex === null ? null : stationT(targetIndex)
     let walking = false
 
-    if (target !== null) {
+    if (keyboard.dir !== 0 && canControl()) {
+      // Đi bằng bàn phím: huỷ trạm đang đi tới, bước dọc đường theo hướng phím.
+      const st = useJourney.getState()
+      if (st.targetIndex !== null) useJourney.setState({ targetIndex: null, openGiftOnArrive: false })
+      const next = THREE.MathUtils.clamp(mascot.t + (keyboard.dir * SPEED * Math.min(dt, 0.1)) / layout.length, 0, 1)
+      if (next !== mascot.t) {
+        mascot.t = next
+        walking = true
+        tmpDir.copy(layout.curve.getTangentAt(mascot.t)).multiplyScalar(keyboard.dir)
+        heading.current.lerp(tmpDir, 0.18)
+        playStep(time)
+      }
+      // Đứng đúng tại một trạm thì coi như đang ở trạm đó (bấm vào nhà là mở luôn); tới hộp quà đã mở khoá thì vào trạng thái mở quà.
+      const at = stationAt(mascot.t)
+      if (at !== st.currentIndex) {
+        const giftReady = at === GIFT_INDEX && isStationAvailable(st, GIFT_INDEX)
+        useJourney.setState({ currentIndex: at, phase: giftReady ? 'gift' : 'journey' })
+      }
+    } else if (target !== null) {
       // Giới hạn dt để không nhảy cóc khi tab bị tạm dừng, nhưng vẫn đủ lớn khi máy yếu.
       const step = (SPEED * Math.min(dt, 0.1)) / layout.length
       const diff = target - mascot.t
