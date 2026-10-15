@@ -12,7 +12,7 @@ export function HUD() {
   const currentIndex = useJourney((s) => s.currentIndex)
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
   const lastVisitedIndex = useJourney((s) => s.lastVisitedIndex)
-  const tutorialOpen = useJourney((s) => s.tutorialOpen)
+  const tourOpen = useJourney((s) => s.tourOpen)
   const giftHintAt = useJourney((s) => s.giftHintAt)
   const volume = useJourney((s) => s.volume)
   const audioOn = useJourney((s) => s.audioOn)
@@ -76,7 +76,7 @@ export function HUD() {
   }
 
   let toast: string | null = null
-  if (tutorialOpen) {
+  if (tourOpen) {
     toast = null
   } else if (giftHint) {
     toast = giftHint
@@ -97,7 +97,7 @@ export function HUD() {
   return (
     <div className="hud">
       <div className="hud-top">
-        <motion.div className="hud-progress" initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+        <motion.div className="hud-progress" data-tour="flowers" initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <div className="label">
             Bó hoa: {count}/{STATION_COUNT} · {count < STATION_COUNT ? `đủ ${STATION_COUNT} hoa sẽ mở quà\u00a0🎁` : 'đã mở khoá quà\u00a0🎉'}
           </div>
@@ -110,16 +110,17 @@ export function HUD() {
           </div>
         </motion.div>
         <div className="hud-actions">
-          <button className="icon-btn" onClick={() => openSettings('character')} title="Đổi nhân vật dẫn đường" aria-label="Đổi nhân vật">
+          <button className="icon-btn" onClick={() => openSettings('character')} data-tour="character" title="Đổi nhân vật dẫn đường" aria-label="Đổi nhân vật">
             <PawIcon />
           </button>
-          <button className="icon-btn" onClick={() => openSettings('audio')} title="Âm lượng" aria-label="Âm lượng">
+          <button className="icon-btn" onClick={() => openSettings('audio')} data-tour="audio" title="Âm lượng" aria-label="Âm lượng">
             <VolumeIcon level={audioOn ? volume : 0} />
           </button>
           {bonusStage !== 'none' && (
             <button
               className={`icon-btn ${bonusStage === 'opened' ? '' : 'bonus-new'}`}
               onClick={playBonus}
+              data-tour="bonus"
               title="Xem video bất ngờ"
               aria-label="Xem video bất ngờ"
             >
@@ -151,6 +152,7 @@ export function HUD() {
               key={action.label}
               className={`btn ${action.cls ?? ''}`}
               onClick={action.onClick}
+              data-tour="action"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 30 }}

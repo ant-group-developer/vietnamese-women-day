@@ -52,7 +52,7 @@ export function CharacterPick() {
           ))}
         </div>
 
-        <label className="tutorial-check pick-check">
+        <label className="check-label pick-check">
           <input type="checkbox" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)} />
           Không hiển thị lại lần sau
         </label>

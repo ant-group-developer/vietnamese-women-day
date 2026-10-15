@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { useJourney } from '../store/useJourney'
 import { housePosition, layout, mascot } from './path'
 import { damp } from './utils'
-import { cameraCmd } from './cameraControl'
+import { cameraCmd, cameraFocus } from './cameraControl'
 
 export const CAMERA_OFFSET = new THREE.Vector3(3, 10.2, 12)
 const GIFT_OFFSET = new THREE.Vector3(0, 5.5, 9)
@@ -48,6 +48,7 @@ export function CameraRig() {
 
     if (giftFocus) focus.copy(housePosition(currentIndex)).add(giftLift)
     else if (openedIndex !== null) focus.copy(housePosition(openedIndex)).lerp(mascot.pos, 0.5)
+    else if (cameraFocus.station >= 0) focus.copy(housePosition(cameraFocus.station)).lerp(mascot.pos, 0.5)
     // Quà bóng bay chưa mở và nhân vật còn đứng cạnh: nhìn vào giữa nhân vật và hộp quà
     // (màn hình dọc hẹp, nhìn mỗi nhân vật thì hộp quà bị lệch ra mép).
     else if (

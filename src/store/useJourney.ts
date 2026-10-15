@@ -30,8 +30,8 @@ interface JourneyState {
   /** Thời điểm và trạm vừa nhận hoa (để trigger animation HUD). */
   lastFlowerAt: number
   lastVisitedIndex: number
-  /** Hộp hướng dẫn đang mở. */
-  tutorialOpen: boolean
+  /** Tour hướng dẫn đang chạy. */
+  tourOpen: boolean
   /** Hộp cài đặt đang mở (null = đóng). */
   settingsOpen: SettingsPanel | null
   /** Nhân vật dẫn đường đã chọn. */
@@ -49,8 +49,8 @@ interface JourneyState {
   bonusReturn: Phase
 
   start: () => void
-  openTutorial: () => void
-  closeTutorial: (dontShowAgain: boolean) => void
+  openTour: () => void
+  closeTour: () => void
   openSettings: (panel: SettingsPanel) => void
   closeSettings: () => void
   setCharacter: (id: CharacterId) => void
@@ -83,7 +83,7 @@ const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 export const BONUS_ENABLED = !!siteData.bonus.src
 const BONUS_FLOWERS = siteData.bonus.flowers
 
-const TUTORIAL_KEY = 'vn-woman-day:tutorial-seen'
+const TOUR_KEY = 'vn-woman-day:tour-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
 const PICK_SKIP_KEY = 'vn-woman-day:pick-skip'
 const VOLUME_KEY = 'vn-woman-day:volume'
@@ -111,12 +111,18 @@ function pickSkipped(): boolean {
     return false
   }
 }
-function tutorialSeen(): boolean {
+/**
+ * Tour chỉ tự chạy ở lần đầu tiên vào web: đánh dấu đã xem ngay khi mở,
+ * nên dù tải lại trang giữa chừng thì lần sau cũng không hiện nữa (vẫn xem lại được bằng nút ?).
+ */
+function takeFirstTour(): boolean {
   try {
-    return localStorage.getItem(TUTORIAL_KEY) === '1'
+    if (localStorage.getItem(TOUR_KEY) === '1') return false
+    localStorage.setItem(TOUR_KEY, '1')
   } catch {
-    return false
+    /* bỏ qua nếu trình duyệt chặn localStorage */
   }
+  return true
 }
 
 export const useJourney = create<JourneyState>((set, get) => ({
@@ -130,7 +136,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   cameraResetAt: 0,
   lastFlowerAt: 0,
   lastVisitedIndex: -1,
-  tutorialOpen: false,
+  tourOpen: false,
   settingsOpen: null,
   character: savedCharacter(),
   giftHintAt: 0,
@@ -140,18 +146,9 @@ export const useJourney = create<JourneyState>((set, get) => ({
   bonusLandedAt: 0,
   bonusReturn: 'journey',
 
-  start: () => (pickSkipped() ? set({ phase: 'journey', tutorialOpen: !tutorialSeen() }) : set({ phase: 'pick' })),
-  openTutorial: () => set({ tutorialOpen: true }),
-  closeTutorial: (dontShowAgain) => {
-    if (dontShowAgain) {
-      try {
-        localStorage.setItem(TUTORIAL_KEY, '1')
-      } catch {
-        /* bỏ qua nếu trình duyệt chặn localStorage */
-      }
-    }
-    set({ tutorialOpen: false })
-  },
+  start: () => (pickSkipped() ? set({ phase: 'journey', tourOpen: takeFirstTour() }) : set({ phase: 'pick' })),
+  openTour: () => set({ tourOpen: true }),
+  closeTour: () => set({ tourOpen: false }),
   openSettings: (panel) => set({ settingsOpen: panel }),
   closeSettings: () => set({ settingsOpen: null }),
   confirmCharacter: (id, dontShowAgain) => {
@@ -161,7 +158,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
     } catch {
       /* bỏ qua nếu trình duyệt chặn localStorage */
     }
-    set({ phase: 'journey', tutorialOpen: !tutorialSeen() })
+    set({ phase: 'journey', tourOpen: takeFirstTour() })
   },
   setCharacter: (id) => {
     try {
@@ -173,8 +170,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
   },
 
   goTo: (index) => {
-    const { openedIndex, phase, targetIndex, currentIndex, tutorialOpen, settingsOpen } = get()
-    if (openedIndex !== null || tutorialOpen || settingsOpen) return
+    const { openedIndex, phase, targetIndex, currentIndex, tourOpen, settingsOpen } = get()
+    if (openedIndex !== null || tourOpen || settingsOpen) return
     if (phase !== 'journey' && phase !== 'gift') return
     if (!isStationAvailable(get(), index)) return
     if (targetIndex === null && index === currentIndex) {
@@ -225,7 +222,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
       s.openGift()
       return
     }
-    if (s.phase !== 'journey' || s.openedIndex !== null || s.tutorialOpen || s.settingsOpen) return
+    if (s.phase !== 'journey' || s.openedIndex !== null || s.tourOpen || s.settingsOpen) return
     if (!isStationAvailable(s, GIFT_INDEX)) {
       set({ giftHintAt: Date.now() })
       return
@@ -244,7 +241,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   tapBonus: () => {
     const s = get()
     if (s.phase !== 'journey' && s.phase !== 'gift') return
-    if (s.openedIndex !== null || s.tutorialOpen || s.settingsOpen) return
+    if (s.openedIndex !== null || s.tourOpen || s.settingsOpen) return
     if (s.bonusStage === 'ready') set({ bonusStage: 'opening' })
     else if (s.bonusStage === 'opened') s.playBonus()
   },

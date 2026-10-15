@@ -30,14 +30,19 @@ export function LabelLayer() {
         const status = stationStatus(visited, i)
         return (
           <div key={d.slug} className="label-anchor" ref={(el) => bindLabelElement(`station-${i}`, el)}>
-            <div className={`station-label ${status} ${suggested === i ? 'suggested' : ''}`}>
+            <div
+              className={`station-label ${status} ${suggested === i ? 'suggested' : ''}`}
+              data-tour="station"
+            >
               {status === 'visited' ? '✅' : d.icon} {d.name}
             </div>
           </div>
         )
       })}
       <div className="label-anchor" ref={(el) => bindLabelElement(`station-${GIFT_INDEX}`, el)}>
-        <div className={`station-label ${giftState}`}>{giftText}</div>
+        <div className={`station-label ${giftState}`} data-tour="gift">
+          {giftText}
+        </div>
       </div>
       <div className="label-anchor" ref={(el) => bindLabelElement('bonus', el)}>
         {bonusText && <div className={`station-label ${bonusStage === 'ready' ? 'bonus below' : 'visited'}`}>{bonusText}</div>}

@@ -9,7 +9,7 @@ import { HUD } from './ui/HUD'
 import { DepartmentModal } from './ui/DepartmentModal'
 import { GiftVideo } from './ui/GiftVideo'
 import { Outro } from './ui/Outro'
-import { Tutorial } from './ui/Tutorial'
+import { Tour } from './ui/Tour'
 import { CameraControls } from './ui/CameraControls'
 import { SettingsModal } from './ui/SettingsModal'
 import { useJourney } from './store/useJourney'
@@ -36,7 +36,7 @@ export default function App() {
       <HUD />
       <CameraControls />
       <DepartmentModal />
-      <Tutorial />
+      <Tour />
       <SettingsModal />
       <AnimatePresence>
         {phase === 'video' && (

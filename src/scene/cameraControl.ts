@@ -11,3 +11,6 @@ export function zoomCamera(steps: number) {
 export function rotateCamera(angle: number) {
   cameraCmd.rotate += angle
 }
+
+/** Tour hướng dẫn: camera nhìn vào giữa nhân vật và trạm này để thấy rõ ngôi nhà (-1 = bám nhân vật như thường). */
+export const cameraFocus = { station: -1 }
