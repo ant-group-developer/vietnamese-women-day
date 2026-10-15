@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { departments, fallbackAvatar, type Member } from '../data/departments'
+import { departments, fallbackAvatar, photoThumb, photoUrl, type Member } from '../data/departments'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
 import { shade } from '../scene/utils'
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon } from './icons'
 
 function photoSrc(m: Member) {
-  return m.photo || fallbackAvatar(m.name)
+  return m.photo ? photoUrl(m.photo) : fallbackAvatar(m.name)
 }
 
 function MemberCard({ m, i, onOpen }: { m: Member; i: number; onOpen: () => void }) {
@@ -23,12 +23,15 @@ function MemberCard({ m, i, onOpen }: { m: Member; i: number; onOpen: () => void
     >
       <img
         className="photo"
-        src={photoSrc(m)}
+        src={m.photo ? photoThumb(m.photo) : fallbackAvatar(m.name)}
         alt={m.name}
         loading="lazy"
+        decoding="async"
         onError={(e) => {
+          // Thiếu thumbnail thì thử ảnh lớn, ảnh lớn cũng lỗi mới dùng avatar dự phòng.
           const img = e.currentTarget
-          if (!img.src.startsWith('data:')) img.src = fallbackAvatar(m.name)
+          if (img.src.includes('.thumb.')) img.src = photoSrc(m)
+          else if (!img.src.startsWith('data:')) img.src = fallbackAvatar(m.name)
         }}
       />
       <div className="name">{m.name}</div>

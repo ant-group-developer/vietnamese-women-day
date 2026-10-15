@@ -9,23 +9,23 @@
             "members": [
                 {
                     "name": "Phạm Thị Thu Trang",
-                    "photo": "/images/hcns/pham-thi-thu-trang.jpg"
+                    "photo": "/images/hcns/pham-thi-thu-trang.webp"
                 },
                 {
                     "name": "Nguyễn Thị Hường",
-                    "photo": "/images/hcns/nguyen-thi-huong.jpg"
+                    "photo": "/images/hcns/nguyen-thi-huong.webp"
                 },
                 {
                     "name": "Nguyễn Thị Hảo",
-                    "photo": "/images/hcns/nguyen-thi-hao.jpg"
+                    "photo": "/images/hcns/nguyen-thi-hao.webp"
                 },
                 {
                     "name": "Ngô Thị Khánh Hoà",
-                    "photo": "/images/hcns/ngo-thi-khanh-hoa.jpg"
+                    "photo": "/images/hcns/ngo-thi-khanh-hoa.webp"
                 },
                 {
                     "name": "Phan Đoàn Châu Anh",
-                    "photo": "/images/hcns/phan-doan-chau-anh.jpg"
+                    "photo": "/images/hcns/phan-doan-chau-anh.webp"
                 }
             ]
         },
@@ -38,11 +38,11 @@
             "members": [
                 {
                     "name": "Hồ Thục Anh",
-                    "photo": "/images/ke-toan/ho-thuc-anh.jpg"
+                    "photo": "/images/ke-toan/ho-thuc-anh.webp"
                 },
                 {
                     "name": "Lê Thu Trang",
-                    "photo": "/images/ke-toan/le-thu-trang.jpg"
+                    "photo": "/images/ke-toan/le-thu-trang.webp"
                 }
             ]
         },
@@ -55,23 +55,23 @@
             "members": [
                 {
                     "name": "Bùi Ngọc Anh",
-                    "photo": "/images/phong-am2/bui-ngoc-anh.jpg"
+                    "photo": "/images/phong-am2/bui-ngoc-anh.webp"
                 },
                 {
                     "name": "Nguyễn Hiền Lan",
-                    "photo": "/images/phong-am2/hien-lan.jpg"
+                    "photo": "/images/phong-am2/hien-lan.webp"
                 },
                 {
                     "name": "Nguyễn Lan Phương",
-                    "photo": "/images/phong-am2/nguyen-lan-phuong.jpg"
+                    "photo": "/images/phong-am2/nguyen-lan-phuong.webp"
                 },
                 {
                     "name": "Trần Thị Linh",
-                    "photo": "/images/phong-am2/tran-thi-linh.jpg"
+                    "photo": "/images/phong-am2/tran-thi-linh.webp"
                 },
                 {
                     "name": "Nguyễn Thị Tuyết Mai",
-                    "photo": "/images/phong-am2/tuyet-mai.jpg"
+                    "photo": "/images/phong-am2/tuyet-mai.webp"
                 }
             ]
         },
@@ -84,15 +84,15 @@
             "members": [
                 {
                     "name": "Lưu Thúy Anh",
-                    "photo": "/images/phong-am3/luu-thuy-anh.jpg"
+                    "photo": "/images/phong-am3/luu-thuy-anh.webp"
                 },
                 {
                     "name": "Nguyễn Quỳnh Nhung",
-                    "photo": "/images/phong-am3/nguyen-quynh-nhung.jpg"
+                    "photo": "/images/phong-am3/nguyen-quynh-nhung.webp"
                 },
                 {
                     "name": "Phạm Diệu Vi",
-                    "photo": "/images/phong-am3/pham-dieu-vi.jpg"
+                    "photo": "/images/phong-am3/pham-dieu-vi.webp"
                 }
             ]
         },
@@ -105,11 +105,11 @@
             "members": [
                 {
                     "name": "Lê Thị Vân",
-                    "photo": "/images/phong-ip/le-thi-van.jpg"
+                    "photo": "/images/phong-ip/le-thi-van.webp"
                 },
                 {
                     "name": "Vũ Thị Tuyết Trinh",
-                    "photo": "/images/phong-ip/vu-thi-tuyet-trinh.jpg"
+                    "photo": "/images/phong-ip/vu-thi-tuyet-trinh.webp"
                 }
             ]
         },
@@ -122,11 +122,11 @@
             "members": [
                 {
                     "name": "Nguyễn Thị Loan",
-                    "photo": "/images/phong-ql-ph/nguyen-thi-loan.jpg"
+                    "photo": "/images/phong-ql-ph/nguyen-thi-loan.webp"
                 },
                 {
                     "name": "Vũ Thị Hải Lý",
-                    "photo": "/images/phong-ql-ph/vu-thi-hai-ly.jpg"
+                    "photo": "/images/phong-ql-ph/vu-thi-hai-ly.webp"
                 }
             ]
         },
@@ -139,15 +139,15 @@
             "members": [
                 {
                     "name": "Nguyễn Thị Gấm",
-                    "photo": "/images/phong-sx/nguyen-thi-gam.jpg"
+                    "photo": "/images/phong-sx/nguyen-thi-gam.webp"
                 },
                 {
                     "name": "Đặng Hương Giang",
-                    "photo": "/images/phong-sx/dang-huong-giang.jpg"
+                    "photo": "/images/phong-sx/dang-huong-giang.webp"
                 },
                 {
                     "name": "Đỗ Hồng Hạnh",
-                    "photo": "/images/phong-sx/do-hong-hanh.jpg"
+                    "photo": "/images/phong-sx/do-hong-hanh.webp"
                 }
             ]
         }

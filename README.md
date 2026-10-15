@@ -45,7 +45,7 @@ Rồi mở http://localhost:5280/admin. `npm run dev` tự chạy các API trong
 
 ### Ghi chú
 
-- Ảnh nhân viên được thu nhỏ về tối đa 800px ngay trên trình duyệt trước khi upload. Nút **Thêm nhiều từ ảnh** lấy tên file làm tên người.
+- Ảnh nhân viên được thu nhỏ về tối đa 800px và chuyển sang WebP ngay trên trình duyệt trước khi upload. Nút **Thêm nhiều từ ảnh** lấy tên file làm tên người.
 - Nhạc nền phát lần lượt theo danh sách, hết bài cuối thì quay lại đầu (có tuỳ chọn xáo bài).
 - Video quà và video bất ngờ: upload mp4 hoặc dán link YouTube (cùng ở tab Video).
 - Mỗi lần lưu tạo một file `config/site-<thời gian>.json` trên Blob, giữ lại 10 bản gần nhất.
@@ -53,6 +53,7 @@ Rồi mở http://localhost:5280/admin. `npm run dev` tự chạy các API trong
 ## Dữ liệu mặc định (khi chưa lưu gì trên /admin)
 
 - Phòng ban: `src/data/departments.json` (có thể sinh bằng `python scripts/import-photos.py raw-photos`, ảnh nằm ở `public/images/<slug>/`).
+- Tối ưu ảnh nhân viên: `python scripts/optimize-photos.py` chuyển mọi ảnh trong `departments.json` (kể cả ảnh đang nằm trên Vercel Blob) thành `<ten>.webp` (800px) + `<ten>.thumb.webp` (320px, cho ô ảnh trong thiệp) trong `public/images/<slug>/`. Thêm `--from https://<ten-mien>/api/config` để lấy danh sách đang lưu trên Vercel làm gốc. Chạy lại sau mỗi lần import ảnh mới.
 - Nhạc nền: bài "Carefree" trên R2 (khai báo trong `src/data/siteData.ts`). Video quà và 2 video bất ngờ (mốc 2 và 5 bông hoa) là link YouTube, cũng khai báo trong `src/data/siteData.ts`.
 - Hiệu ứng âm thanh (luôn lấy từ `public/audio/`): `step.mp3`, `pop.mp3`, `gift.mp3`. Thiếu file nào thì bỏ qua.
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { fallbackAvatar } from '../data/departments'
+import { fallbackAvatar, photoThumb } from '../data/departments'
 import type { Department, Member } from '../data/siteData'
 import { LIMITS } from '../data/siteData'
 import { nameFromFile, slugify, uploadFile } from './api'
@@ -260,7 +260,7 @@ function MemberCard({ member, dept, handle, onChange, onRemove, onError }: Membe
   return (
     <div className="member">
       <button className="photo" onClick={() => fileRef.current?.click()} title="Đổi ảnh" style={{ borderColor: dept.color }}>
-        <img src={member.photo || fallbackAvatar(member.name || '?')} alt="" onError={(e) => (e.currentTarget.src = fallbackAvatar(member.name || '?'))} />
+        <img src={member.photo ? photoThumb(member.photo) : fallbackAvatar(member.name || '?')} alt="" onError={(e) => (e.currentTarget.src = fallbackAvatar(member.name || '?'))} />
         <span className={`photo-overlay ${progress !== null ? 'show' : ''}`}>{progress !== null ? `${progress}%` : '📷'}</span>
       </button>
       <input

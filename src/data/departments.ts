@@ -13,7 +13,21 @@ export const STATION_COUNT = departments.length
 /** Chỉ số của hộp quà trên đường đi (ngay sau trạm cuối). */
 export const GIFT_INDEX = STATION_COUNT
 
-const PASTELS = ['#ffb3c6', '#ffd6a5', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#fdffb6']
+/**
+ * Ảnh lớn của nhân viên. Ảnh trong repo đã chuyển hết sang .webp (scripts/optimize-photos.py),
+ * nên cấu hình cũ lưu trên Vercel còn trỏ .jpg/.png vẫn được đổi sang .webp.
+ */
+export function photoUrl(photo: string): string {
+  return photo.startsWith('/images/') ? photo.replace(/\.(jpe?g|png)$/i, '.webp') : photo
+}
+
+/** Ảnh nhỏ cho ô ảnh trong modal: ảnh trong repo có sẵn bản .thumb.webp, ảnh ngoài (Blob) dùng ảnh gốc. */
+export function photoThumb(photo: string): string {
+  const full = photoUrl(photo)
+  return full.startsWith('/images/') ? full.replace(/\.webp$/i, '.thumb.webp') : full
+}
+
+const PASTELS =['#ffb3c6', '#ffd6a5', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff', '#ffc6ff', '#fdffb6']
 
 /** Avatar dự phòng khi ảnh thiếu/lỗi: hình tròn pastel + chữ cái đầu của tên. */
 export function fallbackAvatar(name: string): string {

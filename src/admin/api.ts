@@ -100,7 +100,7 @@ export function nameFromFile(file: File): string {
   return stem.split(/\s+-\s+/)[0].replace(/\s+/g, ' ').trim() || file.name
 }
 
-/** Thu nhỏ ảnh về tối đa `max`px, xuất JPEG (giống scripts/import-photos.py). */
+/** Thu nhỏ ảnh về tối đa `max`px, xuất WebP (giống scripts/optimize-photos.py). */
 async function resizeImage(file: File, max = 800): Promise<Blob> {
   let bmp: ImageBitmap
   try {
@@ -118,8 +118,11 @@ async function resizeImage(file: File, max = 800): Promise<Blob> {
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height)
   bmp.close()
-  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.85))
-  return blob ?? file
+  const encode = (type: string, quality: number) => new Promise<Blob | null>((r) => canvas.toBlob(r, type, quality))
+  // Safari cũ không xuất được WebP (trả về PNG) thì dùng JPEG.
+  const webp = await encode('image/webp', 0.8)
+  if (webp?.type === 'image/webp') return webp
+  return (await encode('image/jpeg', 0.85)) ?? file
 }
 
 export type UploadFolder = 'images' | 'audio' | 'video'
@@ -142,7 +145,8 @@ export async function uploadFile(
     let ext = (file.name.match(/\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase()
     if (folder === 'images') {
       body = await resizeImage(file)
-      if (body.type === 'image/jpeg') ext = 'jpg'
+      if (body.type === 'image/webp') ext = 'webp'
+      else if (body.type === 'image/jpeg') ext = 'jpg'
     }
     const dir = subdir ? `${folder}/${slugify(subdir)}` : folder
     const pathname = `${dir}/${slugify(baseName)}${ext ? `.${ext}` : ''}`
