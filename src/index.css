@@ -664,20 +664,23 @@ button {
   flex-direction: column;
 }
 .modal-head {
-  padding: 22px 24px 18px;
+  padding: 12px 56px 12px;
   color: #fff;
   position: relative;
   text-align: center;
 }
-.modal-head .icon { font-size: 44px; line-height: 1; }
-.modal-head h2 { margin: 6px 0 4px; font-size: 26px; text-shadow: 0 2px 0 rgba(0,0,0,0.12); }
-.modal-head p { margin: 0; font-size: 15px; opacity: 0.95; }
+/* Icon nằm cùng dòng với tên phòng để phần đầu gọn, nhường chỗ cho ảnh thành viên. */
+.modal-head .title-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.modal-head .icon { font-size: 30px; line-height: 1; flex: none; }
+.modal-head h2 { margin: 0; font-size: 24px; text-shadow: 0 2px 0 rgba(0,0,0,0.12); }
+.modal-head p { margin: 4px 0 0; font-size: 14px; opacity: 0.95; }
 .modal-close {
   position: absolute;
-  top: 12px;
+  top: 50%;
   right: 12px;
-  width: 36px;
-  height: 36px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.35);
   color: #fff;
@@ -902,7 +905,11 @@ button {
   .character-thumb { width: 46px; height: 46px; border-radius: 12px; }
   .character-name { font-size: 11px; line-height: 1.25; }
   .character-emoji { font-size: 36px; }
-  .modal-head h2 { font-size: 22px; }
+  .modal-head { padding: 10px 48px 10px 16px; }
+  .modal-head .title-row { gap: 6px; }
+  .modal-head .icon { font-size: 22px; }
+  .modal-head h2 { font-size: 19px; line-height: 1.2; }
+  .modal-head p { font-size: 13px; }
   .station-label { font-size: 12px; padding: 5px 10px; }
 }
 
@@ -921,9 +928,9 @@ button {
   .outro p { margin-bottom: 14px; }
   .modal-backdrop { padding: 10px; }
   .modal-card { max-height: calc(100dvh - 20px); }
-  .modal-head { padding: 10px 56px 10px; }
-  .modal-head .icon { font-size: 28px; }
-  .modal-head h2 { font-size: 20px; margin: 2px 0; }
+  .modal-head { padding: 8px 52px; }
+  .modal-head .icon { font-size: 22px; }
+  .modal-head h2 { font-size: 18px; }
   .modal-head p { font-size: 13px; }
   .modal-foot { padding: 8px 16px 10px; }
   .members { --cols: 4; }
@@ -956,6 +963,11 @@ button {
   .hud-progress { padding: 8px 10px; }
   .hud-progress .label { font-size: 13px; }
   .hud-flowers { font-size: 16px; }
+  .modal-head { padding: 8px 40px 8px 12px; }
+  .modal-head .icon { font-size: 18px; }
+  .modal-head h2 { font-size: 16px; }
+  .modal-head p { font-size: 12px; }
+  .modal-close { width: 30px; height: 30px; right: 8px; font-size: 15px; }
 }
 @media (min-width: 768px) {
   .settings-card { width: min(760px, 100%); }
@@ -992,6 +1004,8 @@ button {
   .character-grid.pick-grid { margin-bottom: 12px; }
   .pick-card p { margin-bottom: 14px; }
   .pick-card .intro-badge { display: none; }
+  /* Ảnh thành viên nhỏ lại một chút để phòng 5–6 người vừa khung, không phải cuộn. */
+  .members { max-width: 560px; }
 }
 @media (min-width: 768px) and (max-height: 700px) {
   .character-grid { --thumb: 52px; }

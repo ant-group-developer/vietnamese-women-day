@@ -182,10 +182,12 @@ export function DepartmentModal() {
                 <button className="modal-close" onClick={close} aria-label="Đóng">
                   ✕
                 </button>
-                <motion.div className="icon" animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 2.4 }}>
-                  {dept.icon}
-                </motion.div>
-                <h2>{dept.name}</h2>
+                <div className="title-row">
+                  <motion.div className="icon" animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 2.4 }}>
+                    {dept.icon}
+                  </motion.div>
+                  <h2>{dept.name}</h2>
+                </div>
                 <p>{dept.message}</p>
               </div>
               <div className="modal-body">
