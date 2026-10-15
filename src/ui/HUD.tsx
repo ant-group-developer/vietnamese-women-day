@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
-import { nextStationIndex, useJourney } from '../store/useJourney'
+import { bonusAtStation, bonusTitle, droppedBonuses, nextStationIndex, useJourney } from '../store/useJourney'
 import { FilmIcon, PawIcon, VolumeIcon } from './icons'
 
 export function HUD() {
@@ -16,9 +16,8 @@ export function HUD() {
   const giftHintAt = useJourney((s) => s.giftHintAt)
   const volume = useJourney((s) => s.volume)
   const audioOn = useJourney((s) => s.audioOn)
-  const bonusStage = useJourney((s) => s.bonusStage)
+  const bonuses = useJourney((s) => s.bonuses)
   const bonusLandedAt = useJourney((s) => s.bonusLandedAt)
-  const bonusIndex = useJourney((s) => s.bonusIndex)
   const { goTo, openGift, openSettings, playBonus, tapBonus } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
@@ -59,6 +58,15 @@ export function HUD() {
     return () => clearTimeout(t)
   }, [bonusLandedAt])
 
+  // Nhiều video bất ngờ: nút 🎬 mở danh sách để chọn video xem lại.
+  const [bonusMenu, setBonusMenu] = useState(false)
+  useEffect(() => {
+    if (!bonusMenu) return
+    const close = () => setBonusMenu(false)
+    window.addEventListener('pointerdown', close)
+    return () => window.removeEventListener('pointerdown', close)
+  }, [bonusMenu])
+
   if (phase !== 'journey' && phase !== 'gift') return null
 
   const count = visited.filter(Boolean).length
@@ -66,10 +74,13 @@ export function HUD() {
   const idle = targetIndex === null && openedIndex === null
 
   // Quà bóng bay chưa mở mà nhân vật đang đứng cạnh: nút dưới cùng gợi ý mở quà trước.
-  const bonusWaiting = bonusStage === 'ready' && currentIndex === bonusIndex
+  const waitingSlot = bonusAtStation(bonuses, currentIndex, ['ready'])
+  const bonusWaiting = waitingSlot >= 0
+  const anyBonusReady = bonuses.some((b) => b.stage === 'ready')
+  const dropped = droppedBonuses(bonuses)
   let action: { label: string; onClick: () => void; cls?: string } | null = null
   if (idle) {
-    if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: tapBonus, cls: 'gift' }
+    if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: () => tapBonus(waitingSlot), cls: 'gift' }
     else if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
     else if (next < STATION_COUNT) action = { label: `Đi tiếp → ${departments[next].name}`, onClick: () => goTo(next) }
     else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà\u00a0🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
@@ -80,7 +91,7 @@ export function HUD() {
     toast = null
   } else if (giftHint) {
     toast = giftHint
-  } else if (bonusToast && bonusStage === 'ready') {
+  } else if (bonusToast && anyBonusReady) {
     toast = 'Có quà bất ngờ! Bấm vào để mở nhé 🎈'
   } else if (flowerToast) {
     toast = flowerToast
@@ -116,16 +127,40 @@ export function HUD() {
           <button className="icon-btn" onClick={() => openSettings('audio')} data-tour="audio" title="Âm lượng" aria-label="Âm lượng">
             <VolumeIcon level={audioOn ? volume : 0} />
           </button>
-          {bonusStage !== 'none' && (
-            <button
-              className={`icon-btn ${bonusStage === 'opened' ? '' : 'bonus-new'}`}
-              onClick={playBonus}
-              data-tour="bonus"
-              title="Xem video bất ngờ"
-              aria-label="Xem video bất ngờ"
-            >
-              <FilmIcon />
-            </button>
+          {dropped.length > 0 && (
+            <div className="bonus-menu-wrap" onPointerDown={(e) => e.stopPropagation()}>
+              <button
+                className={`icon-btn ${dropped.some((i) => bonuses[i].stage !== 'opened') ? 'bonus-new' : ''} ${bonusMenu ? 'active' : ''}`}
+                onClick={() => (dropped.length === 1 ? playBonus(dropped[0]) : setBonusMenu((v) => !v))}
+                data-tour="bonus"
+                title="Xem video bất ngờ"
+                aria-label="Xem video bất ngờ"
+              >
+                <FilmIcon />
+              </button>
+              <AnimatePresence>
+                {bonusMenu && (
+                  <motion.div
+                    className="bonus-menu"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                  >
+                    {dropped.map((i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setBonusMenu(false)
+                          playBonus(i)
+                        }}
+                      >
+                        {bonuses[i].stage === 'opened' ? '🎬' : '🎈'} {bonusTitle(i)}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
       </div>

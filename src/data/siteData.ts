@@ -1,5 +1,5 @@
 import raw from './departments.json'
-import { DEFAULT_BONUS_FLOWERS, parseSiteData, type Department, type SiteData } from './siteSchema'
+import { parseSiteData, type Department, type SiteData } from './siteSchema'
 
 export * from './siteSchema'
 
@@ -19,7 +19,7 @@ export const defaultSiteData: SiteData = {
     volume: 0.15,
   },
   video: { type: 'mp4', src: '/video/gift.mp4' },
-  bonus: { type: 'mp4', src: '', flowers: DEFAULT_BONUS_FLOWERS },
+  bonuses: [],
 }
 
 /** Cấu hình đang dùng. Được gán 1 lần trong main.tsx trước khi import App. */

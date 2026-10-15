@@ -2,13 +2,13 @@ import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { config } from '../config'
-import { useJourney } from '../store/useJourney'
+import { bonusTitle, droppedBonuses, useJourney } from '../store/useJourney'
 
 export function Outro() {
   const continueJourney = useJourney((s) => s.continueJourney)
   const playVideo = useJourney((s) => s.playVideo)
   const playBonus = useJourney((s) => s.playBonus)
-  const hasBonus = useJourney((s) => s.bonusStage !== 'none')
+  const bonuses = useJourney((s) => s.bonuses)
 
   useEffect(() => {
     const end = Date.now() + 1800
@@ -36,11 +36,11 @@ export function Outro() {
           <button className="btn" onClick={playVideo}>
             Xem lại video 🎬
           </button>
-          {hasBonus && (
-            <button className="btn ghost" onClick={playBonus}>
-              Video bất ngờ 🎈
+          {droppedBonuses(bonuses).map((i) => (
+            <button key={i} className="btn ghost" onClick={() => playBonus(i)}>
+              {bonusTitle(i)} 🎈
             </button>
-          )}
+          ))}
           <button className="btn ghost" onClick={continueJourney}>
             Tiếp tục dạo chơi 🐾
           </button>

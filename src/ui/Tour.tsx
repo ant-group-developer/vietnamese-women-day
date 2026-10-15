@@ -60,7 +60,7 @@ function buildSteps(): Step[] {
       optional: true,
       icon: '🎬',
       title: 'Video bất ngờ',
-      text: 'Xem lại video bất ngờ bạn đã mở.',
+      text: 'Xem lại các video bất ngờ bạn đã nhận.',
     },
     {
       target: 'zoom',

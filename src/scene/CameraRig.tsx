@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { useJourney } from '../store/useJourney'
+import { bonusAtStation, useJourney } from '../store/useJourney'
 import { housePosition, layout, mascot } from './path'
 import { damp } from './utils'
 import { cameraCmd, cameraFocus } from './cameraControl'
@@ -43,7 +43,7 @@ export function CameraRig() {
     const c = controls.current
     if (!c) return
     const now = clock.elapsedTime
-    const { openedIndex, phase, currentIndex, targetIndex, cameraResetAt, bonusStage, bonusIndex } = useJourney.getState()
+    const { openedIndex, phase, currentIndex, targetIndex, cameraResetAt, bonuses } = useJourney.getState()
     const giftFocus = phase === 'opening' || phase === 'gift' || phase === 'video' || phase === 'outro'
 
     if (giftFocus) focus.copy(housePosition(currentIndex)).add(giftLift)
@@ -51,12 +51,8 @@ export function CameraRig() {
     else if (cameraFocus.station >= 0) focus.copy(housePosition(cameraFocus.station)).lerp(mascot.pos, 0.5)
     // Quà bóng bay chưa mở và nhân vật còn đứng cạnh: nhìn vào giữa nhân vật và hộp quà
     // (màn hình dọc hẹp, nhìn mỗi nhân vật thì hộp quà bị lệch ra mép).
-    else if (
-      (bonusStage === 'dropping' || bonusStage === 'ready' || bonusStage === 'opening') &&
-      bonusIndex === currentIndex &&
-      targetIndex === null
-    )
-      focus.copy(layout.stations[bonusIndex].bonusPos).lerp(mascot.pos, 0.5).add(bonusLift)
+    else if (targetIndex === null && bonusAtStation(bonuses, currentIndex, ['dropping', 'ready', 'opening']) >= 0)
+      focus.copy(layout.stations[currentIndex].bonusPos).lerp(mascot.pos, 0.5).add(bonusLift)
     else focus.copy(mascot.pos)
 
     // Yêu cầu đưa camera về góc mặc định (nút HUD, tiếp tục dạo chơi, hoặc khi tới hộp quà).

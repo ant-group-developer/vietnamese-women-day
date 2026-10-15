@@ -2,21 +2,21 @@ import * as THREE from 'three'
 import { STATION_COUNT } from '../data/departments'
 
 /**
- * Đường uốn lượn hình chữ S chạy dọc đảo theo trục x: mỗi trạm nằm ở đỉnh một khúc cua,
- * xen kẽ lệch về phía sau (z âm) và phía trước (z dương).
+ * Đường là một cung tròn thoai thoải chạy dọc đảo theo trục x, võng ra phía sau (xa camera).
+ * Các trạm cách đều nhau trên cung, nhà nằm phía ngoài cung (sau đường) để không che nhân vật.
  */
-/** Khoảng cách theo trục x giữa hai trạm liên tiếp (nửa bước sóng). */
-const STEP_X = 6.5
-/** Độ lệch z của đỉnh khúc cua so với trục giữa. */
-const AMPLITUDE = 3.6
+/** Khoảng cách (theo cung) giữa hai trạm liên tiếp. */
+const STEP = 7
+/** Bán kính cung nhỏ nhất (càng lớn càng thẳng). */
+const MIN_RADIUS = 38
+/** Nửa góc mở tối đa của cung: nhiều trạm thì cung dài ra nhưng không cong quá. */
+const MAX_HALF_ANGLE = 0.55
+/** Đoạn đường dẫn vào trước trạm đầu và đoạn đuôi sau hộp quà. */
+const LEAD_IN = 5
+const TAIL = 2.5
 export const PATH_Y = 0.08
-/**
- * Nhà luôn lùi về phía sau trạm (xa camera) để không che nhân vật:
- * ở khúc cua phía sau nhà nằm ngoài khúc cua, ở khúc cua phía trước nhà nằm gọn trong lòng khúc cua.
- */
+/** Nhà lùi về phía ngoài cung (sau đường, xa camera) so với điểm dừng. */
 const HOUSE_BACK = 2.4
-/** Lòng khúc cua hẹp ở gần đỉnh nên nhà trong lòng khúc cua lùi sâu hơn chút. */
-const HOUSE_BACK_INSIDE = 3.1
 
 export interface StationLayout {
   index: number
@@ -25,6 +25,8 @@ export interface StationLayout {
   pos: THREE.Vector3
   /** Vị trí ngôi nhà/hộp quà. */
   housePos: THREE.Vector3
+  /** Góc xoay quanh trục y để mặt trước nhà quay về phía đường. */
+  houseRotY: number
   /** Chỗ quà bóng bay đáp xuống nếu rơi ở trạm này: cạnh điểm dừng, phía camera, tránh đường và nhà. */
   bonusPos: THREE.Vector3
 }
@@ -40,23 +42,23 @@ export interface PathLayout {
 
 function buildLayout(): PathLayout {
   const total = STATION_COUNT + 1 // trạm + hộp quà
-  const rnd = seededRandom(2010)
-  const x0 = -((total - 1) * STEP_X) / 2
-  const stopPoints: THREE.Vector3[] = []
-  for (let i = 0; i < total; i++) {
-    // Hộp quà (điểm cuối) luôn ở khúc cua phía sau cho rộng chỗ đặt bục quà.
-    const back = (total - 1 - i) % 2 === 0
-    const z = AMPLITUDE * (0.9 + rnd() * 0.2)
-    stopPoints.push(new THREE.Vector3(x0 + i * STEP_X + (rnd() - 0.5) * 0.6, PATH_Y, back ? -z : z))
-  }
-  const first = stopPoints[0]
-  const last = stopPoints[total - 1]
-  // Đoạn đầu đi vào khúc cua thứ nhất, đoạn đuôi ngắn sau hộp quà.
-  const points = [
-    new THREE.Vector3(first.x - STEP_X * 0.8, PATH_Y, -first.z * 0.5),
-    ...stopPoints,
-    new THREE.Vector3(last.x + 2.5, PATH_Y, last.z * 0.5),
-  ]
+  const span = (total - 1) * STEP
+  const radius = Math.max(MIN_RADIUS, (span + LEAD_IN + TAIL) / 2 / MAX_HALF_ANGLE)
+  // Tâm cung nằm phía camera (z dương); đỉnh cung ở z = 0.
+  const arcCenter = new THREE.Vector3(0, PATH_Y, radius)
+  /** Hướng từ tâm ra điểm trên cung ở độ dài cung s (s = 0 là đỉnh). */
+  const dirAt = (s: number) => new THREE.Vector3(Math.sin(s / radius), 0, -Math.cos(s / radius))
+  const pointAt = (s: number) => arcCenter.clone().addScaledVector(dirAt(s), radius)
+
+  const s0 = -span / 2
+  const stopS = Array.from({ length: total }, (_, i) => s0 + i * STEP)
+  const stopPoints = stopS.map(pointAt)
+  // Lấy mẫu dày trên cung để đường CatmullRom bám đúng cung tròn.
+  const points: THREE.Vector3[] = []
+  const from = s0 - LEAD_IN
+  const to = s0 + span + TAIL
+  const n = Math.ceil(to - from)
+  for (let i = 0; i <= n; i++) points.push(pointAt(from + ((to - from) * i) / n))
 
   const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal')
   const SAMPLES = 2000
@@ -74,33 +76,48 @@ function buildLayout(): PathLayout {
     return best / SAMPLES
   }
 
-  const all: StationLayout[] = stopPoints.map((p, index) => ({
-    index,
-    t: tFor(p),
-    pos: p.clone(),
-    housePos: p.clone().add(new THREE.Vector3(0, 0, p.z > 0 ? -HOUSE_BACK_INSIDE : -HOUSE_BACK)),
-    bonusPos: p.clone(),
-  }))
+  const all: StationLayout[] = stopPoints.map((p, index) => {
+    const out = dirAt(stopS[index])
+    const housePos = p.clone().addScaledVector(out, HOUSE_BACK)
+    return {
+      index,
+      t: tFor(p),
+      pos: p.clone(),
+      housePos,
+      // Mặt trước nhà (+z) quay vào tâm cung, tức là nhìn ra đường.
+      houseRotY: -stopS[index] / radius,
+      bonusPos: p.clone(),
+    }
+  })
 
   const box = new THREE.Box3().setFromPoints([...points, ...all.map((s) => s.housePos)])
   const size = box.getSize(new THREE.Vector3())
   const center = box.getCenter(new THREE.Vector3())
   center.y = 0
-  const island = { center, rx: size.x / 2 + 4.5, rz: size.z / 2 + 5.5 }
+  // Hai đầu cung nằm ở góc trước của khung bao nên nới bán trục x cho đảo ôm trọn cả hai đầu.
+  const rz = size.z / 2 + 5.5
+  let rx = size.x / 2 + 4.5
+  for (const p of [...points, ...all.map((s) => s.housePos)]) {
+    const dz = (p.z - center.z) / rz
+    rx = Math.max(rx, (Math.abs(p.x - center.x) + 4.5) / Math.sqrt(Math.max(0.2, 1 - dz * dz)))
+  }
+  const island = { center, rx, rz }
 
-  // Chỗ đáp của quà bóng bay: thử lần lượt các hướng, ưu tiên ngang hàng bên cạnh nhân vật
-  // (đặt phía trước thì chùm bóng bay che mất nhân vật).
+  // Chỗ đáp của quà bóng bay: thử lần lượt các hướng (theo dọc đường, ra phía sau đường),
+  // ưu tiên phía sau đường, giữa hai nhà (đặt phía trước thì chùm bóng bay che mất nhân vật).
   const pathSamples = curve.getSpacedPoints(300)
   const houses = all.map((s) => s.housePos)
   const OFFSETS: [number, number][] = [
-    [3, 0.4], [-3, 0.4], [3.4, -0.6], [-3.4, -0.6], [3, 1.4], [-3, 1.4], [3.8, 0.4], [-3.8, 0.4], [2.4, 2.4], [-2.4, 2.4],
+    [3.5, 1.6], [-3.5, 1.6], [3.5, 2.3], [-3.5, 2.3], [3.2, -2.2], [-3.2, -2.2], [2.4, -2.6], [-2.4, -2.6],
   ]
   for (const s of all) {
-    const candidates = OFFSETS.map(([dx, dz]) => new THREE.Vector3(s.pos.x + dx, 0, s.pos.z + dz))
+    const out = dirAt(stopS[s.index])
+    const along = new THREE.Vector3(-out.z, 0, out.x)
+    const candidates = OFFSETS.map(([a, o]) => s.pos.clone().addScaledVector(along, a).addScaledVector(out, o).setY(0))
     const free = candidates.find(
       (c) =>
         ((c.x - center.x) / (island.rx - 2)) ** 2 + ((c.z - center.z) / (island.rz - 2)) ** 2 < 1 &&
-        pathSamples.every((p) => p.distanceToSquared(c) > 1.9 * 1.9) &&
+        pathSamples.every((p) => p.distanceToSquared(c) > 1.6 * 1.6) &&
         houses.every((h) => h.distanceToSquared(c) > 3 * 3),
     )
     s.bonusPos = free ?? candidates[0]

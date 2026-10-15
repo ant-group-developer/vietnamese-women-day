@@ -10,6 +10,12 @@ export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' 
  * → opening (bóng bay bay đi, mở nắp) → opened (đã xem video, xem lại được).
  */
 export type BonusStage = 'none' | 'dropping' | 'ready' | 'opening' | 'opened'
+/** Trạng thái một quà bóng bay (ứng với một video bất ngờ). */
+export interface BonusSlot {
+  stage: BonusStage
+  /** Trạm mà quà rơi xuống cạnh đó (-1 = chưa rơi). */
+  index: number
+}
 /** Hộp cài đặt: chọn nhân vật hoặc chỉnh âm lượng. */
 export type SettingsPanel = 'character' | 'audio'
 
@@ -40,11 +46,12 @@ interface JourneyState {
   giftHintAt: number
   /** Bấm hộp quà từ xa: tới nơi thì tự mở. */
   openGiftOnArrive: boolean
-  bonusStage: BonusStage
-  /** Trạm mà quà bóng bay rơi xuống cạnh đó. */
-  bonusIndex: number
-  /** Thời điểm quà bóng bay đáp xuống (để HUD hiện thông báo). */
+  /** Trạng thái từng quà bóng bay, cùng thứ tự với BONUSES. */
+  bonuses: BonusSlot[]
+  /** Thời điểm quà bóng bay gần nhất đáp xuống (để HUD hiện thông báo). */
   bonusLandedAt: number
+  /** Video bất ngờ đang phát (chỉ số trong BONUSES). */
+  bonusPlaying: number
   /** Phase để quay về sau khi xem xong video bất ngờ. */
   bonusReturn: Phase
 
@@ -63,12 +70,12 @@ interface JourneyState {
   /** Bấm vào hộp quà: còn khoá thì nhắc, đủ hoa thì chạy tới và mở. */
   tapGift: () => void
   playVideo: () => void
-  /** Quà bóng bay đã rơi chạm đất. */
-  landBonus: () => void
-  /** Bấm vào quà bóng bay: mở hộp rồi phát video bất ngờ. */
-  tapBonus: () => void
-  /** Phát video bất ngờ (cũng dùng cho nút xem lại). */
-  playBonus: () => void
+  /** Quà bóng bay thứ i đã rơi chạm đất. */
+  landBonus: (i: number) => void
+  /** Bấm vào quà bóng bay thứ i: mở hộp rồi phát video bất ngờ. */
+  tapBonus: (i: number) => void
+  /** Phát video bất ngờ thứ i (cũng dùng cho nút xem lại). */
+  playBonus: (i: number) => void
   finishBonus: () => void
   finishVideo: () => void
   /** Rời màn kết thúc về lại bản đồ, giữ nguyên số hoa đã nhận (chỉ tải lại trang mới bắt đầu lại). */
@@ -80,9 +87,9 @@ interface JourneyState {
 
 const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 
-/** Có video bất ngờ thì mới thả quà bóng bay. */
-export const BONUS_ENABLED = !!siteData.bonus.src
-const BONUS_FLOWERS = siteData.bonus.flowers
+/** Các video bất ngờ có video, xếp theo mốc số hoa tăng dần. */
+export const BONUSES = siteData.bonuses.filter((b) => b.src).sort((a, b) => a.flowers - b.flowers)
+const freshBonuses = (): BonusSlot[] => BONUSES.map(() => ({ stage: 'none', index: -1 }))
 
 const TOUR_KEY = 'vn-woman-day:tour-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
@@ -142,9 +149,9 @@ export const useJourney = create<JourneyState>((set, get) => ({
   character: savedCharacter(),
   giftHintAt: 0,
   openGiftOnArrive: false,
-  bonusStage: 'none',
-  bonusIndex: -1,
+  bonuses: freshBonuses(),
   bonusLandedAt: 0,
+  bonusPlaying: -1,
   bonusReturn: 'journey',
 
   start: () => (pickSkipped() ? set({ phase: 'journey', tourOpen: takeFirstTour() }) : set({ phase: 'pick' })),
@@ -197,19 +204,21 @@ export const useJourney = create<JourneyState>((set, get) => ({
   },
 
   closeModal: () => {
-    const { openedIndex, visited, bonusStage } = get()
+    const { openedIndex, visited, bonuses } = get()
     if (openedIndex === null) return
     const next = [...visited]
     const gained = !next[openedIndex]
     next[openedIndex] = true
-    // Vừa đủ số hoa: thả quà bóng bay xuống cạnh trạm vừa thăm.
-    const drop = BONUS_ENABLED && gained && bonusStage === 'none' && next.filter(Boolean).length >= BONUS_FLOWERS
+    // Vừa đủ mốc số hoa: thả quà bóng bay xuống cạnh trạm vừa thăm.
+    // Mỗi bông hoa mới chỉ thả 1 quà (các video trùng mốc rơi dần ở những trạm sau) để quà không chồng lên nhau.
+    const count = next.filter(Boolean).length
+    const drop = gained ? bonuses.findIndex((b, i) => b.stage === 'none' && BONUSES[i].flowers <= count) : -1
     set({
       openedIndex: null,
       visited: next,
       lastFlowerAt: gained ? Date.now() : get().lastFlowerAt,
       lastVisitedIndex: openedIndex,
-      ...(drop ? { bonusStage: 'dropping' as const, bonusIndex: openedIndex } : {}),
+      ...(drop >= 0 ? { bonuses: updateSlot(bonuses, drop, { stage: 'dropping', index: openedIndex }) } : {}),
     })
   },
 
@@ -236,22 +245,24 @@ export const useJourney = create<JourneyState>((set, get) => ({
 
   playVideo: () => set({ phase: 'video' }),
 
-  landBonus: () => {
-    if (get().bonusStage === 'dropping') set({ bonusStage: 'ready', bonusLandedAt: Date.now() })
+  landBonus: (i) => {
+    const { bonuses } = get()
+    if (bonuses[i]?.stage === 'dropping') set({ bonuses: updateSlot(bonuses, i, { stage: 'ready' }), bonusLandedAt: Date.now() })
   },
 
-  tapBonus: () => {
+  tapBonus: (i) => {
     const s = get()
     if (s.phase !== 'journey' && s.phase !== 'gift') return
     if (s.openedIndex !== null || s.tourOpen || s.settingsOpen) return
-    if (s.bonusStage === 'ready') set({ bonusStage: 'opening' })
-    else if (s.bonusStage === 'opened') s.playBonus()
+    const stage = s.bonuses[i]?.stage
+    if (stage === 'ready') set({ bonuses: updateSlot(s.bonuses, i, { stage: 'opening' }) })
+    else if (stage === 'opened') s.playBonus(i)
   },
 
-  playBonus: () => {
-    const { phase, bonusStage } = get()
-    if (bonusStage === 'none' || phase === 'bonus') return
-    set({ phase: 'bonus', bonusReturn: phase, bonusStage: 'opened' })
+  playBonus: (i) => {
+    const { phase, bonuses } = get()
+    if (!bonuses[i] || bonuses[i].stage === 'none' || phase === 'bonus') return
+    set({ phase: 'bonus', bonusReturn: phase, bonusPlaying: i, bonuses: updateSlot(bonuses, i, { stage: 'opened' }) })
   },
 
   finishBonus: () => {
@@ -276,6 +287,25 @@ export const useJourney = create<JourneyState>((set, get) => ({
   },
   resetCamera: () => set({ cameraResetAt: Date.now() }),
 }))
+
+function updateSlot(bonuses: BonusSlot[], i: number, patch: Partial<BonusSlot>): BonusSlot[] {
+  return bonuses.map((b, j) => (j === i ? { ...b, ...patch } : b))
+}
+
+/** Quà bóng bay đã rơi (đang rơi, chờ mở hoặc đã mở), theo thứ tự rơi xuống. */
+export function droppedBonuses(bonuses: BonusSlot[]): number[] {
+  return bonuses.map((_, i) => i).filter((i) => bonuses[i].stage !== 'none')
+}
+
+/** Quà bóng bay ở cạnh trạm index đang ở một trong các trạng thái stages (-1 nếu không có). */
+export function bonusAtStation(bonuses: BonusSlot[], index: number, stages: BonusStage[]): number {
+  return bonuses.findIndex((b) => b.index === index && stages.includes(b.stage))
+}
+
+/** Tên hiển thị của video bất ngờ thứ i. */
+export function bonusTitle(i: number): string {
+  return BONUSES[i]?.title || (BONUSES.length > 1 ? `Video bất ngờ ${i + 1}` : 'Video bất ngờ')
+}
 
 /**
  * Trạm gợi ý tiếp theo: trạm chưa thăm gần nhân vật nhất trên đường đi.

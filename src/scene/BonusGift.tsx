@@ -11,7 +11,6 @@ import { Present } from './GiftBox'
 
 /** Hộp quà nhỏ hơn hộp quà cuối (model gốc rộng 0.44). */
 const BONUS_SCALE = 2.6
-const BOX = '#b8a4ff'
 const RIBBON = '#ff7aa8'
 /** Độ cao bắt đầu rơi và thời gian rơi (giây). */
 const DROP_HEIGHT = 13
@@ -43,14 +42,23 @@ function burst(origin: { x: number; y: number }) {
  * Bấm vào thì bóng bay bay đi, nắp bật ra, pháo giấy nổ rồi phát video bất ngờ.
  */
 export function BonusGift() {
-  const stage = useJourney((s) => s.bonusStage)
-  const index = useJourney((s) => s.bonusIndex)
-  if (stage === 'none' || index < 0) return null
-  return <BonusGiftAt key={index} pos={layout.stations[index].bonusPos} side={bonusSide(index)} />
+  const bonuses = useJourney((s) => s.bonuses)
+  return (
+    <>
+      {bonuses.map((b, i) =>
+        b.stage === 'none' || b.index < 0 ? null : (
+          <BonusGiftAt key={i} slot={i} pos={layout.stations[b.index].bonusPos} side={bonusSide(b.index)} />
+        ),
+      )}
+    </>
+  )
 }
 
-function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
-  const stage = useJourney((s) => s.bonusStage)
+/** Mỗi video bất ngờ một màu hộp quà để phân biệt khi có nhiều hộp trên bản đồ. */
+const BOX_COLORS = ['#b8a4ff', '#8ed6ff', '#ffb38a', '#9ee6a8', '#ffd166']
+
+function BonusGiftAt({ slot, pos, side }: { slot: number; pos: THREE.Vector3; side: 1 | -1 }) {
+  const stage = useJourney((s) => s.bonuses[slot].stage)
   const tapBonus = useJourney((s) => s.tapBonus)
   const playBonus = useJourney((s) => s.playBonus)
   const root = useRef<THREE.Group>(null)
@@ -93,9 +101,9 @@ function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
 
   useEffect(() => {
     // Hướng dẫn mở quà luôn nằm trên nhãn phòng ban.
-    setLabelTarget('bonus', labelPos, 1000)
-    setLabelTarget('bonus-hand', handPos, 1000)
-  }, [labelPos, handPos])
+    setLabelTarget(`bonus-${slot}`, labelPos, 1000)
+    setLabelTarget(`bonus-hand-${slot}`, handPos, 1000)
+  }, [slot, labelPos, handPos])
 
   useEffect(() => {
     if (released) releaseStart.current = -2
@@ -109,12 +117,12 @@ function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
       root.current.getWorldPosition(screen).project(camera)
       burst({ x: THREE.MathUtils.clamp((screen.x + 1) / 2, 0.1, 0.9), y: THREE.MathUtils.clamp((1 - screen.y) / 2, 0.2, 0.85) })
     }, 350)
-    const v = setTimeout(playBonus, 2000)
+    const v = setTimeout(() => playBonus(slot), 2000)
     return () => {
       clearTimeout(c)
       clearTimeout(v)
     }
-  }, [stage, playBonus, camera])
+  }, [stage, slot, playBonus, camera])
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
@@ -130,7 +138,7 @@ function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
     if (k >= 1 && landedAt.current < 0) {
       landedAt.current = t
       playSfx('pop')
-      useJourney.getState().landBonus()
+      useJourney.getState().landBonus(slot)
     }
 
     // Nảy nhẹ khi chạm đất, sau đó phập phồng chờ bấm.
@@ -217,7 +225,7 @@ function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
       <group
         onClick={(e) => {
           e.stopPropagation()
-          if (clickable) tapBonus()
+          if (clickable) tapBonus(slot)
         }}
         onPointerOver={(e) => {
           e.stopPropagation()
@@ -230,7 +238,7 @@ function BonusGiftAt({ pos, side }: { pos: THREE.Vector3; side: 1 | -1 }) {
         }}
       >
         <group ref={box}>
-          <Present color={BOX} ribbon={RIBBON} lidRef={lid} scale={BONUS_SCALE} y={0} />
+          <Present color={BOX_COLORS[slot % BOX_COLORS.length]} ribbon={RIBBON} lidRef={lid} scale={BONUS_SCALE} y={0} />
         </group>
         {/* Vùng bấm rộng hơn hộp một chút cho dễ bấm trên điện thoại */}
         <mesh position={[0, 0.7, 0]} visible={false}>

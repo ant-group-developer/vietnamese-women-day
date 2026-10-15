@@ -84,7 +84,7 @@ export function Station({ index, dept }: Props) {
     prevStatus.current = status
   }
 
-  const { housePos } = layout.stations[index]
+  const { housePos, houseRotY } = layout.stations[index]
 
   useEffect(() => {
     setLabelTarget(`station-${index}`, housePos.clone().add(new THREE.Vector3(0, 3.3, 0)))
@@ -111,7 +111,7 @@ export function Station({ index, dept }: Props) {
   })
 
   return (
-    <group position={housePos}>
+    <group position={housePos} rotation={[0, houseRotY, 0]}>
       {/* Vòng sáng gợi ý trạm tiếp theo */}
       <mesh ref={ring} position={[0, 0.06, 1.2]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.1, 1.3, 40]} />

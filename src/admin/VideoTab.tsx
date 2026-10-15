@@ -1,12 +1,26 @@
 import { useRef, useState, type ReactNode } from 'react'
-import type { VideoConfig } from '../data/siteData'
+import { DEFAULT_BONUS_FLOWERS, LIMITS, type BonusConfig, type VideoConfig } from '../data/siteData'
 import { youtubeEmbed } from '../utils/youtube'
 import { uploadFile } from './api'
 import type { TabProps } from './AdminApp'
 
 export function VideoTab({ data, update, onError }: TabProps) {
-  const { bonus } = data
+  const { bonuses } = data
   const maxFlowers = data.departments.length
+  const clampFlowers = (n: number) => Math.min(maxFlowers, Math.max(1, n))
+
+  const patchBonus = (id: string, patch: Partial<BonusConfig>) =>
+    update((d) => ({ ...d, bonuses: d.bonuses.map((b) => (b.id === id ? { ...b, ...patch } : b)) }))
+  const addBonus = () =>
+    update((d) => {
+      // Mốc mặc định: sau mốc lớn nhất hiện có một chút.
+      const last = Math.max(0, ...d.bonuses.map((b) => b.flowers))
+      const flowers = clampFlowers(last ? last + 2 : DEFAULT_BONUS_FLOWERS)
+      return { ...d, bonuses: [...d.bonuses, { id: `b${Date.now().toString(36)}`, type: 'mp4', src: '', flowers }] }
+    })
+  const removeBonus = (id: string) => update((d) => ({ ...d, bonuses: d.bonuses.filter((b) => b.id !== id) }))
+
+  const sameFlowers = (b: BonusConfig) => bonuses.some((o) => o.id !== b.id && o.src && b.src && o.flowers === b.flowers)
 
   return (
     <div className="stack">
@@ -20,36 +34,72 @@ export function VideoTab({ data, update, onError }: TabProps) {
         onError={onError}
       />
 
-      <VideoEditor
-        title="Video bất ngờ giữa hành trình 🎈"
-        hint="Khi thu thập đủ số bông hoa bên dưới, một hộp quà treo bóng bay rơi xuống cạnh nhân vật. Bấm vào hộp để xem video; sau đó xem lại được ở nút 🎬 trên thanh trên cùng."
-        emptyHint="Chưa có video. Quà bóng bay sẽ không xuất hiện."
-        uploadName="bonus"
-        video={bonus}
-        onChange={(video) => update((d) => ({ ...d, bonus: { ...d.bonus, ...video } }))}
-        onError={onError}
-      >
-        <label className="field">
-          <span>Số bông hoa để quà rơi xuống (1–{maxFlowers})</span>
-          <input
-            type="number"
-            min={1}
-            max={maxFlowers}
-            value={bonus.flowers}
-            onChange={(e) => {
-              const n = Math.round(Number(e.target.value))
-              if (!Number.isFinite(n)) return
-              update((d) => ({ ...d, bonus: { ...d.bonus, flowers: Math.min(maxFlowers, Math.max(1, n)) } }))
-            }}
-          />
-        </label>
-      </VideoEditor>
+      <div className="card">
+        <div className="card-head">
+          <h2>Video bất ngờ giữa hành trình 🎈 ({bonuses.length})</h2>
+          <button className="btn primary" onClick={addBonus} disabled={bonuses.length >= LIMITS.bonuses}>
+            ＋ Thêm video bất ngờ
+          </button>
+        </div>
+        <p className="hint">
+          Mỗi video có một mốc số bông hoa: khi thu thập đủ số hoa đó, một hộp quà treo bóng bay rơi xuống cạnh nhân vật. Bấm vào hộp để
+          xem video; sau đó xem lại được ở nút 🎬 trên thanh trên cùng. Video chưa có file/link sẽ bị bỏ qua.
+        </p>
+        {bonuses.length === 0 && <p className="hint">Chưa có video bất ngờ nào.</p>}
+      </div>
+
+      {bonuses.map((b, i) => (
+        <VideoEditor
+          key={b.id}
+          title={`🎈 Video bất ngờ #${i + 1}${b.title ? ` – ${b.title}` : ''}`}
+          action={
+            <button className="btn danger" onClick={() => confirm('Xoá video bất ngờ này?') && removeBonus(b.id)}>
+              Xoá
+            </button>
+          }
+          hint=""
+          emptyHint="Chưa có video. Quà bóng bay này sẽ không xuất hiện."
+          uploadName={`bonus-${b.id}`}
+          video={b}
+          onChange={(video) => patchBonus(b.id, video)}
+          onError={onError}
+        >
+          <div className="grid-2">
+            <label className="field">
+              <span>Xuất hiện khi đủ bao nhiêu bông hoa (1–{maxFlowers})</span>
+              <input
+                type="number"
+                min={1}
+                max={maxFlowers}
+                value={b.flowers}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value))
+                  if (Number.isFinite(n)) patchBonus(b.id, { flowers: clampFlowers(n) })
+                }}
+              />
+            </label>
+            <label className="field">
+              <span>Tên hiển thị (không bắt buộc)</span>
+              <input
+                placeholder={`Video bất ngờ ${i + 1}`}
+                maxLength={80}
+                value={b.title ?? ''}
+                onChange={(e) => patchBonus(b.id, { title: e.target.value || undefined })}
+              />
+            </label>
+          </div>
+          {sameFlowers(b) && (
+            <p className="hint">Có video khác cùng mốc {b.flowers} hoa: video sau sẽ rơi xuống ở bông hoa kế tiếp.</p>
+          )}
+        </VideoEditor>
+      ))}
     </div>
   )
 }
 
 function VideoEditor({
   title,
+  action,
   hint,
   emptyHint,
   uploadName,
@@ -59,6 +109,8 @@ function VideoEditor({
   children,
 }: {
   title: string
+  /** Nút phụ ở góc phải tiêu đề (vd. xoá). */
+  action?: ReactNode
   hint: string
   emptyHint: string
   uploadName: string
@@ -94,8 +146,15 @@ function VideoEditor({
   return (
     <>
       <div className="card">
-        <h2>{title}</h2>
-        <p className="hint">{hint}</p>
+        {action ? (
+          <div className="card-head">
+            <h2>{title}</h2>
+            {action}
+          </div>
+        ) : (
+          <h2>{title}</h2>
+        )}
+        {hint && <p className="hint">{hint}</p>}
         {children}
         <div className="segmented">
           <button className={video.type === 'mp4' ? 'active' : ''} onClick={() => setVideo({ type: 'mp4', src: drafts.mp4 })}>

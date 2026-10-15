@@ -109,7 +109,7 @@ export function GiftBox() {
   const ring = useRef<THREE.Mesh>(null)
   const [hover, setHover] = useState(false)
   const openStart = useRef(-1)
-  const { housePos } = layout.gift
+  const { housePos, houseRotY } = layout.gift
 
   useEffect(() => {
     setLabelTarget(`station-${GIFT_INDEX}`, housePos.clone().add(new THREE.Vector3(0, 4.3, 0)))
@@ -182,7 +182,7 @@ export function GiftBox() {
   })
 
   return (
-    <group position={housePos}>
+    <group position={housePos} rotation={[0, houseRotY, 0]}>
       <mesh ref={ring} position={[0, 0.06, 1.4]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.4, 1.65, 48]} />
         <meshBasicMaterial color="#ffd166" transparent opacity={0} depthWrite={false} />

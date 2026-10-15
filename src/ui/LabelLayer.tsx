@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { departments, GIFT_INDEX } from '../data/departments'
 import { nextStationIndex, stationStatus, useJourney } from '../store/useJourney'
 import { bindLabelElement } from '../scene/labels'
@@ -9,10 +10,7 @@ export function LabelLayer() {
   const visited = useJourney((s) => s.visited)
   const allVisited = visited.every(Boolean)
   const visible = phase !== 'intro' && phase !== 'pick'
-  const bonusStage = useJourney((s) => s.bonusStage)
-  const bonusIndex = useJourney((s) => s.bonusIndex)
-  const handRight = bonusIndex >= 0 && bonusSide(bonusIndex) === 1
-  const bonusText = bonusStage === 'ready' ? '🎈 Bấm để mở quà!' : bonusStage === 'opened' ? '🎬 Xem lại' : null
+  const bonuses = useJourney((s) => s.bonuses)
   const suggested = phase === 'journey' ? nextStationIndex(visited) : -1
 
   const giftState = !allVisited ? 'locked' : phase === 'gift' ? 'available suggested' : 'visited'
@@ -44,12 +42,20 @@ export function LabelLayer() {
           {giftText}
         </div>
       </div>
-      <div className="label-anchor" ref={(el) => bindLabelElement('bonus', el)}>
-        {bonusText && <div className={`station-label ${bonusStage === 'ready' ? 'bonus below' : 'visited'}`}>{bonusText}</div>}
-      </div>
-      <div className="label-anchor" ref={(el) => bindLabelElement('bonus-hand', el)}>
-        {bonusStage === 'ready' && <div className={`tap-hand ${handRight ? 'right' : 'left'}`}>{handRight ? '👈' : '👉'}</div>}
-      </div>
+      {bonuses.map(({ stage, index }, i) => {
+        const handRight = index >= 0 && bonusSide(index) === 1
+        const text = stage === 'ready' ? '🎈 Bấm để mở quà!' : stage === 'opened' ? '🎬 Xem lại' : null
+        return (
+          <Fragment key={i}>
+            <div className="label-anchor" ref={(el) => bindLabelElement(`bonus-${i}`, el)}>
+              {text && <div className={`station-label ${stage === 'ready' ? 'bonus below' : 'visited'}`}>{text}</div>}
+            </div>
+            <div className="label-anchor" ref={(el) => bindLabelElement(`bonus-hand-${i}`, el)}>
+              {stage === 'ready' && <div className={`tap-hand ${handRight ? 'right' : 'left'}`}>{handRight ? '👈' : '👉'}</div>}
+            </div>
+          </Fragment>
+        )
+      })}
     </div>
   )
 }

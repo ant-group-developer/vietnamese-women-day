@@ -38,6 +38,9 @@ export interface VideoConfig {
 
 /** Video bất ngờ giữa hành trình: quà treo bóng bay rơi xuống khi thu thập đủ `flowers` bông hoa. */
 export interface BonusConfig extends VideoConfig {
+  id: string
+  /** Tên hiển thị ở nút xem lại (không bắt buộc). */
+  title?: string
   flowers: number
 }
 
@@ -46,7 +49,8 @@ export interface SiteData {
   departments: Department[]
   music: MusicConfig
   video: VideoConfig
-  bonus: BonusConfig
+  /** Các video bất ngờ, mỗi video một mốc số hoa. */
+  bonuses: BonusConfig[]
   updatedAt?: string
 }
 
@@ -57,6 +61,7 @@ export const LIMITS = {
   departments: 30,
   members: 100,
   tracks: 50,
+  bonuses: 10,
 }
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -154,18 +159,30 @@ export function parseSiteData(input: unknown): SiteData {
   })
   const volume = typeof m.volume === 'number' && Number.isFinite(m.volume) ? Math.min(1, Math.max(0, m.volume)) : 0.15
 
-  const b = obj(root.bonus ?? {}, 'Video bất ngờ')
-  const flowers =
-    typeof b.flowers === 'number' && Number.isFinite(b.flowers)
-      ? Math.min(departments.length, Math.max(1, Math.round(b.flowers)))
-      : Math.min(departments.length, DEFAULT_BONUS_FLOWERS)
+  // Bản cũ chỉ có 1 video bất ngờ (root.bonus): chuyển thành danh sách.
+  const legacy = root.bonus as { src?: unknown } | undefined
+  const bonusList = Array.isArray(root.bonuses) ? root.bonuses : legacy?.src ? [legacy] : []
+  const bonusIds = new Set<string>()
+  const bonuses: BonusConfig[] = arr(bonusList, 'Video bất ngờ', LIMITS.bonuses).map((input, i) => {
+    const where = `Video bất ngờ #${i + 1}`
+    const b = obj(input, where)
+    let id = str(b.id, `${where} – id`, 60, false) || `b${i + 1}`
+    while (bonusIds.has(id)) id += 'x'
+    bonusIds.add(id)
+    const flowers =
+      typeof b.flowers === 'number' && Number.isFinite(b.flowers)
+        ? Math.min(departments.length, Math.max(1, Math.round(b.flowers)))
+        : Math.min(departments.length, DEFAULT_BONUS_FLOWERS)
+    const title = str(b.title, `${where} – tên`, 80, false)
+    return { id, ...video(b, where), flowers, ...(title ? { title } : {}) }
+  })
 
   return {
     version: 1,
     departments,
     music: { tracks, shuffle: m.shuffle === true, volume },
     video: video(root.video, 'Video'),
-    bonus: { ...video(root.bonus, 'Video bất ngờ'), flowers },
+    bonuses,
     updatedAt: typeof root.updatedAt === 'string' ? root.updatedAt : undefined,
   }
 }
