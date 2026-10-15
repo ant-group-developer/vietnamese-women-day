@@ -71,7 +71,8 @@ interface JourneyState {
   playBonus: () => void
   finishBonus: () => void
   finishVideo: () => void
-  restart: () => void
+  /** Rời màn kết thúc về lại bản đồ, giữ nguyên số hoa đã nhận (chỉ tải lại trang mới bắt đầu lại). */
+  continueJourney: () => void
   toggleAudio: () => void
   setVolume: (v: number) => void
   resetCamera: () => void
@@ -191,7 +192,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
       if (autoOpen) setTimeout(() => get().openGift(), 700)
       return
     }
-    set({ currentIndex: index, targetIndex: null, openedIndex: index })
+    // Rời hộp quà sang trạm khác thì thoát trạng thái đứng ở hộp quà.
+    set((s) => ({ currentIndex: index, targetIndex: null, openedIndex: index, phase: s.phase === 'gift' ? 'journey' : s.phase }))
   },
 
   closeModal: () => {
@@ -258,20 +260,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
 
   finishVideo: () => set({ phase: 'outro' }),
 
-  restart: () =>
-    set({
-      phase: 'journey',
-      currentIndex: -1,
-      targetIndex: null,
-      visited: freshVisited(),
-      openedIndex: null,
-      lastFlowerAt: 0,
-      lastVisitedIndex: -1,
-      openGiftOnArrive: false,
-      bonusStage: 'none',
-      bonusIndex: -1,
-      cameraResetAt: Date.now(),
-    }),
+  continueJourney: () =>
+    set({ phase: 'journey', targetIndex: null, openedIndex: null, openGiftOnArrive: false, cameraResetAt: Date.now() }),
 
   toggleAudio: () => set((s) => ({ audioOn: !s.audioOn })),
   setVolume: (v) => {

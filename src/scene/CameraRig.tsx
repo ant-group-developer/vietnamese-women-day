@@ -59,7 +59,7 @@ export function CameraRig() {
       focus.copy(layout.stations[bonusIndex].bonusPos).lerp(mascot.pos, 0.5).add(bonusLift)
     else focus.copy(mascot.pos)
 
-    // Yêu cầu đưa camera về góc mặc định (nút HUD, restart, hoặc khi tới hộp quà).
+    // Yêu cầu đưa camera về góc mặc định (nút HUD, tiếp tục dạo chơi, hoặc khi tới hộp quà).
     if (cameraResetAt !== seenResetAt.current) {
       seenResetAt.current = cameraResetAt
       resetUntil.current = now + 1.5

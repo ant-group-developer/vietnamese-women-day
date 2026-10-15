@@ -5,7 +5,7 @@ import { config } from '../config'
 import { useJourney } from '../store/useJourney'
 
 export function Outro() {
-  const restart = useJourney((s) => s.restart)
+  const continueJourney = useJourney((s) => s.continueJourney)
   const playVideo = useJourney((s) => s.playVideo)
   const playBonus = useJourney((s) => s.playBonus)
   const hasBonus = useJourney((s) => s.bonusStage !== 'none')
@@ -41,8 +41,8 @@ export function Outro() {
               Video bất ngờ 🎈
             </button>
           )}
-          <button className="btn ghost" onClick={restart}>
-            Đi lại từ đầu 🐾
+          <button className="btn ghost" onClick={continueJourney}>
+            Tiếp tục dạo chơi 🐾
           </button>
         </div>
       </motion.div>
