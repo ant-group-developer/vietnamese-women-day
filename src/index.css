@@ -562,6 +562,11 @@ button {
 .speed-row { display: flex; align-items: center; gap: 10px; margin: 14px 4px 16px; }
 .speed-row::before { content: 'Tốc độ đi'; font-weight: 700; color: var(--pink-500); white-space: nowrap; }
 .speed-label { font-size: 20px; line-height: 1; flex: none; }
+/* Màn hẹp: nhãn lên một dòng riêng để thanh trượt đủ dài. */
+@media (max-width: 420px) {
+  .speed-row { flex-wrap: wrap; row-gap: 8px; }
+  .speed-row::before { flex-basis: 100%; text-align: center; }
+}
 .volume-row {
   display: flex;
   align-items: center;
