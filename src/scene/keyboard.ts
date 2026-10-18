@@ -1,10 +1,9 @@
 import { useEffect } from "react";
-import { STATION_COUNT } from "../data/departments";
 import { useJourney } from "../store/useJourney";
-import { layout, stationT } from "./path";
+import { stationNear } from "./route";
 import { isMobile } from "./utils";
 
-/** Điều khiển bằng bàn phím (chỉ trên máy tính): giữ ← → hoặc A D để đi dọc đường. */
+/** Điều khiển bằng bàn phím (chỉ trên máy tính): giữ ← → hoặc A D để đi tới/lùi dọc đường (không phụ thuộc góc camera). */
 export const keyboardEnabled =
     !isMobile &&
     typeof window !== "undefined" &&
@@ -16,22 +15,8 @@ export const keyboard = { dir: 0 };
 /** Khoảng cách để coi là đứng đúng tại trạm (cập nhật currentIndex). */
 const AT = 0.35;
 
-/** Trạm (kể cả hộp quà) gần vị trí t nhất trong phạm vi `range` mét, -1 nếu không có. */
-export function stationNear(t: number, range: number): number {
-    let best = -1;
-    let bestD = range / layout.length;
-    for (let i = 0; i <= STATION_COUNT; i++) {
-        const d = Math.abs(stationT(i) - t);
-        if (d <= bestD) {
-            bestD = d;
-            best = i;
-        }
-    }
-    return best;
-}
-
-export function stationAt(t: number): number {
-    return stationNear(t, AT);
+export function stationAt(u: number): number {
+    return stationNear(u, AT);
 }
 
 /** Có đang được phép điều khiển nhân vật không (không mở popup, tour, cài đặt...). */
@@ -74,9 +59,8 @@ export function useKeyboardControls() {
         const releases = new Map<string, number>();
         let shiftHeld = false;
         const update = () => {
-            keyboard.dir =
-                ([...held].some((k) => RIGHT.has(k)) ? 1 : 0) -
-                ([...held].some((k) => LEFT.has(k)) ? 1 : 0);
+            const any = (keys: Set<string>) => ([...held].some((k) => keys.has(k)) ? 1 : 0);
+            keyboard.dir = any(RIGHT) - any(LEFT);
         };
         const typing = (e: KeyboardEvent) => {
             const el = e.target;

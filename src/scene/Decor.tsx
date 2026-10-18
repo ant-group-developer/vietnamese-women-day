@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { layout, seededRandom } from './path'
 import { isMobile } from './utils'
 import { isReserved } from './landmarks'
+import { onWalkway } from './route'
 import { BLOSSOM, CLOUD_URLS, fitMatrix, getParts, natureUrl, PALETTE, remapMaterial } from './envAssets'
 
 type DecorKind = 'tree' | 'bush' | 'flower' | 'grass' | 'rock' | 'mushroom' | 'stump'
@@ -63,7 +64,7 @@ function buildDecor(): DecorItem[] {
     if (samples.some((s) => s.distanceToSquared(p) < 1.9 * 1.9)) continue
     if (houses.some((h) => h.distanceToSquared(p) < 2.6 * 2.6)) continue
     if (bonusSpots.some((b) => b.distanceToSquared(p) < 1.5 * 1.5)) continue
-    if (isReserved(p, 0.4)) continue
+    if (isReserved(p, 0.4) || onWalkway(p, 0.4)) continue
     if (items.some((it) => (it.pos[0] - x) ** 2 + (it.pos[2] - z) ** 2 < 0.8)) continue
     const k = rnd()
     const kind: DecorKind =

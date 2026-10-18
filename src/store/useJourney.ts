@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { siteData } from '../data/siteData'
-import { mascot, stationT } from '../scene/path'
+import { mascot } from '../scene/path'
+import { diffU, routeStationU } from '../scene/route'
 import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
 export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro' | 'bonus'
@@ -31,6 +32,10 @@ interface JourneyState {
   currentIndex: number
   /** Trạm đang đi tới, null nếu đứng yên. */
   targetIndex: number | null
+  /** Góc chụp ảnh trên đảo phụ đang đi tới (chỉ số trong photoSpots), null nếu không. */
+  targetSpot: number | null
+  /** Góc chụp ảnh đang đứng, -1 nếu không đứng ở góc nào. */
+  atSpot: number
   visited: boolean[]
   /** Trạm đang mở popup. */
   openedIndex: number | null
@@ -75,6 +80,9 @@ interface JourneyState {
   confirmCharacter: (id: CharacterId, dontShowAgain: boolean) => void
   goTo: (index: number) => void
   arrive: (index: number) => void
+  /** Đi tới góc chụp ảnh trên đảo phụ. */
+  goToSpot: (i: number) => void
+  arriveSpot: (i: number) => void
   closeModal: () => void
   openGift: () => void
   /** Bấm vào hộp quà: còn khoá thì nhắc, đủ hoa thì chạy tới và mở. */
@@ -147,6 +155,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
   phase: 'intro',
   currentIndex: -1,
   targetIndex: null,
+  targetSpot: null,
+  atSpot: -1,
   visited: freshVisited(),
   openedIndex: null,
   audioOn: true,
@@ -204,8 +214,20 @@ export const useJourney = create<JourneyState>((set, get) => ({
       return
     }
     // Có thể đổi hướng ngay cả khi đang đi
-    set({ targetIndex: index, openGiftOnArrive: false })
+    set({ targetIndex: index, targetSpot: null, openGiftOnArrive: false })
   },
+
+  goToSpot: (i) => {
+    const { openedIndex, phase, tourOpen, settingsOpen, atSpot, targetIndex } = get()
+    if (openedIndex !== null || tourOpen || settingsOpen) return
+    if (phase !== 'journey' && phase !== 'gift') return
+    if (atSpot === i && targetIndex === null) return
+    set({ targetSpot: i, targetIndex: null, openGiftOnArrive: false })
+  },
+
+  // Tới đảo phụ thì rời khỏi trạm/hộp quà đang đứng.
+  arriveSpot: (i) =>
+    set((s) => ({ atSpot: i, targetSpot: null, currentIndex: -1, phase: s.phase === 'gift' ? 'journey' : s.phase })),
 
   arrive: (index) => {
     if (index === GIFT_INDEX) {
@@ -332,7 +354,7 @@ export function nextStationIndex(visited: boolean[]): number {
   let bestD = Infinity
   for (let i = 0; i < visited.length; i++) {
     if (visited[i]) continue
-    const d = Math.abs(stationT(i) - mascot.t)
+    const d = Math.abs(diffU(mascot.t, routeStationU(i)))
     if (d < bestD) {
       bestD = d
       best = i

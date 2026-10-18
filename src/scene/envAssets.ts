@@ -2,7 +2,7 @@
  * Model môi trường (CC0) trong public/models/env:
  * - nature/  Kenney Nature Kit: cây, bụi, hoa, nấm, đá (vật liệu màu phẳng, đặt tên theo màu)
  * - town/    Kenney Fantasy Town Kit: mảnh tường, mái để lắp nhà (dùng chung texture Textures/colormap.png)
- * - holiday/ Kenney Holiday Kit: hộp quà có nắp tách rời (node "lid")
+ * - holiday/ Kenney Holiday Kit: hộp quà có nắp tách rời (node "lid"), ghế băng
  * - clouds/  mây của Quaternius (poly.pizza)
  * Đơn vị: 1 ô = 1 mét, mặt trước hướng +Z.
  */
@@ -13,6 +13,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 export const ENV = '/models/env'
 export const natureUrl = (name: string) => `${ENV}/nature/${name}.glb`
 export const townUrl = (name: string) => `${ENV}/town/${name}.glb`
+export const holidayUrl = (name: string) => `${ENV}/holiday/${name}.glb`
 export const PRESENT_URL = `${ENV}/holiday/present-a-cube.glb`
 export const CLOUD_URLS = ['a', 'c'].map((n) => `${ENV}/clouds/cloud-${n}.glb`)
 
@@ -37,6 +38,8 @@ export const PALETTE: Record<string, string> = {
   _defaultMat: '#fff6e9',
   stone: '#e6dbe2',
   stoneDark: '#cdbdc8',
+  leafsFall: '#ffb38a',
+  corn: '#ffd166',
 }
 
 export interface Part {

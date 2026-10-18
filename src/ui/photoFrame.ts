@@ -3,6 +3,7 @@ import { STATION_COUNT } from '../data/departments'
 import { CHARACTERS } from '../scene/characters'
 import { drawScene, sceneSize } from '../scene/snapshot'
 import { useJourney } from '../store/useJourney'
+import { photoSpots } from '../scene/route'
 
 const FONT = '"Baloo 2", "Segoe UI", system-ui, sans-serif'
 const PINK = '#f0558a'
@@ -100,7 +101,8 @@ export async function takePhoto(): Promise<Blob | null> {
   sticker(pad + photoW - 2 * u, pad + photoH - 1 * u, 7 * u, 0.4)
 
   // Dải chữ phía dưới.
-  const { visited, character } = useJourney.getState()
+  const { visited, character, atSpot } = useJourney.getState()
+  const place = atSpot >= 0 ? ` · tại ${photoSpots[atSpot].island.name}` : ''
   const count = visited.filter(Boolean).length
   const pet = CHARACTERS[character]
   const cx = W / 2
@@ -110,7 +112,7 @@ export async function takePhoto(): Promise<Blob | null> {
   fitText(ctx, `${config.title} 🌸`, cx, y, maxW, 7.2 * u, 800)
   y += 7 * u
   ctx.fillStyle = TEXT
-  fitText(ctx, `${config.companyName} · cùng bạn đồng hành ${pet.name} ${pet.emoji}`, cx, y, maxW, 3.8 * u, 600)
+  fitText(ctx, `${config.companyName} · cùng ${pet.name} ${pet.emoji}${place}`, cx, y, maxW, 3.8 * u, 600)
   y += 5.6 * u
   const flowers = Array.from({ length: STATION_COUNT }, (_, i) => (i < count ? '🌸' : '🤍')).join(' ')
   const date = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })

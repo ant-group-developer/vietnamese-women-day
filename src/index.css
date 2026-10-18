@@ -394,6 +394,8 @@ button {
 .station-label.suggested { animation: label-bounce 1.2s ease-in-out infinite; }
 .station-label.visited { background: var(--mint-200); }
 .station-label.bonus { background: var(--lavender-200); }
+.station-label.spot { color: var(--pink-500); }
+.station-label.spot.visited { color: var(--text); }
 /* Nhãn nằm dưới điểm neo (mũi nhọn chỉ lên), nhún nhảy như nhãn gợi ý.
    Chữ to hơn nhãn phòng ban vì nhãn bị thu nhỏ theo khoảng cách camera, trên điện thoại còn rất bé. */
 .station-label.below { font-size: 18px; transform: translate(-50%, 12px); animation: label-bounce-below 1.2s ease-in-out infinite; }

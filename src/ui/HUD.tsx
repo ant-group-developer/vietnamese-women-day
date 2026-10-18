@@ -7,11 +7,14 @@ import { keyboardEnabled } from '../scene/keyboard'
 import { takePhoto } from './photoFrame'
 import { playSfx } from '../audio/sound'
 import { trackEvent } from '../utils/ga'
+import { photoSpots } from '../scene/route'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
   const visited = useJourney((s) => s.visited)
   const targetIndex = useJourney((s) => s.targetIndex)
+  const targetSpot = useJourney((s) => s.targetSpot)
+  const atSpot = useJourney((s) => s.atSpot)
   const openedIndex = useJourney((s) => s.openedIndex)
   const currentIndex = useJourney((s) => s.currentIndex)
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
@@ -94,7 +97,7 @@ export function HUD() {
 
   const count = visited.filter(Boolean).length
   const next = nextStationIndex(visited)
-  const idle = targetIndex === null && openedIndex === null
+  const idle = targetIndex === null && targetSpot === null && openedIndex === null
 
   // Quà bóng bay chưa mở mà nhân vật đang đứng cạnh: nút dưới cùng gợi ý mở quà trước.
   const waitingSlot = bonusAtStation(bonuses, currentIndex, ['ready'])
@@ -103,7 +106,8 @@ export function HUD() {
   const dropped = droppedBonuses(bonuses)
   let action: { label: string; onClick: () => void; cls?: string } | null = null
   if (idle) {
-    if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: () => tapBonus(waitingSlot), cls: 'gift' }
+    if (atSpot >= 0) action = { label: 'Chụp ảnh tại đây 📸', onClick: snap, cls: 'gift' }
+    else if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: () => tapBonus(waitingSlot), cls: 'gift' }
     else if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
     else if (next < STATION_COUNT) action = { label: `Đi tiếp → ${departments[next].name}`, onClick: () => goTo(next) }
     else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà\u00a0🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
@@ -118,6 +122,10 @@ export function HUD() {
     toast = 'Có quà bất ngờ! Bấm vào để mở nhé 🎈'
   } else if (flowerToast) {
     toast = flowerToast
+  } else if (targetSpot !== null) {
+    toast = `Đang sang ${photoSpots[targetSpot].island.name}...`
+  } else if (atSpot >= 0 && !shooting) {
+    toast = `Đã tới ${photoSpots[atSpot].island.name}! Tạo dáng chụp ảnh nào 📸`
   } else if (targetIndex !== null) {
     toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà...\u00a0🎁' : `Đang đi tới ${departments[targetIndex].name}...`
   } else if (count === 0 && currentIndex === -1) {

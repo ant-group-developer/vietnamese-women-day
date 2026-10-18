@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import { layout, seededRandom } from './path'
-import { isMobile } from './utils'
 
 /**
  * Bố cục các điểm nhấn quanh đường đi (hồ sen, đài phun nước, chợ hoa, vườn hoa, chỗ cắm trại,
@@ -21,13 +20,19 @@ export interface Spot {
   rotY: number
 }
 
+export type SkyFeature = 'windmill' | 'ruins' | 'tropical' | 'farm' | 'blossom'
+
 export interface SkyIsland {
+  /** Mã đảo (duy nhất). */
+  key: SkyFeature
+  /** Tên hiển thị trên nhãn và ảnh kỷ niệm. */
+  name: string
   center: THREE.Vector3
   rx: number
   rz: number
   seed: number
-  /** Điểm nhấn trên đảo. */
-  feature: 'windmill' | 'blossom' | 'camp' | 'grove'
+  /** Điểm nhấn trên đảo (mỗi đảo một chủ đề). */
+  feature: SkyFeature
   /** Pha nhấp nhô lên xuống. */
   phase: number
 }
@@ -116,21 +121,39 @@ function buildSpots(): Spot[] {
   return placed
 }
 
+/**
+ * Đảo phụ xếp thành vòng cung phía sau đảo chính, từ phải (sau hộp quà) sang trái (cạnh điểm xuất phát),
+ * cách đều nhau theo chiều dài cung. Đường đi chạy một vòng khép kín: đường chính → lần lượt các đảo → về điểm xuất phát.
+ * Độ cao chênh nhau ít để cầu treo không dốc.
+ */
 function buildSkyIslands(): SkyIsland[] {
   const rnd = seededRandom(777)
-  const c = center
-  const list: SkyIsland[] = [
-    // Bên phải, sau hộp quà: nối với đảo chính bằng cầu treo.
-    { center: new THREE.Vector3(c.x + rx + 11, -0.6, c.z - 1), rx: 5.5, rz: 4.5, seed: 11, feature: 'windmill', phase: 0 },
-    // Bên trái, trước điểm xuất phát.
-    { center: new THREE.Vector3(c.x - rx - 9, 1.8, c.z - 7), rx: 4.5, rz: 3.6, seed: 12, feature: 'blossom', phase: 0 },
-    // Phía sau, giữa đảo.
-    { center: new THREE.Vector3(c.x - 6, 3.5, c.z - rz - 15), rx: 6, rz: 4.5, seed: 13, feature: 'camp', phase: 0 },
-    { center: new THREE.Vector3(c.x + rx * 0.5, -2.5, c.z - rz - 11), rx: 4, rz: 3.2, seed: 14, feature: 'grove', phase: 0 },
-    { center: new THREE.Vector3(c.x - rx * 0.55, -4.5, c.z - rz - 9), rx: 3.4, rz: 2.8, seed: 15, feature: 'blossom', phase: 0 },
+  const defs: Omit<SkyIsland, 'center' | 'phase'>[] = [
+    { key: 'windmill', name: 'Đảo Cối Xay Gió', rx: 7, rz: 5.5, seed: 11, feature: 'windmill' },
+    { key: 'ruins', name: 'Đảo Cổ Tích', rx: 6.5, rz: 5.5, seed: 14, feature: 'ruins' },
+    { key: 'tropical', name: 'Đảo Nhiệt Đới', rx: 7, rz: 5.5, seed: 13, feature: 'tropical' },
+    { key: 'farm', name: 'Đảo Nông Trại', rx: 6.5, rz: 5.5, seed: 15, feature: 'farm' },
+    { key: 'blossom', name: 'Đảo Hoa Anh Đào', rx: 6.5, rz: 5.5, seed: 12, feature: 'blossom' },
   ]
-  list.forEach((s) => (s.phase = rnd() * Math.PI * 2))
-  return isMobile ? list.slice(0, 3) : list
+  const heights = [-0.5, 0.6, 1.4, 0.6, -0.3]
+  // Cung elip phía sau đảo chính (z âm), θ = 0 bên phải, θ = π bên trái.
+  const RX = rx + 10
+  const RZ = rz + 8
+  const THETA0 = 0.04
+  const N = 400
+  const pts = Array.from({ length: N + 1 }, (_, i) => {
+    const th = THETA0 + ((Math.PI - 2 * THETA0) * i) / N
+    return new THREE.Vector3(center.x + Math.cos(th) * RX, 0, center.z - Math.sin(th) * RZ)
+  })
+  const cum = [0]
+  for (let i = 1; i <= N; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]))
+  const total = cum[N]
+  return defs.map((d, k) => {
+    const target = (total * k) / (defs.length - 1)
+    const i = cum.findIndex((v) => v >= target)
+    const p = pts[Math.max(0, i)].clone().setY(heights[k])
+    return { ...d, center: p, phase: rnd() * Math.PI * 2 }
+  })
 }
 
 export const spots = buildSpots()
