@@ -193,7 +193,8 @@ export function HUD() {
         </div>
       )}
 
-      {!keyboardEnabled && !tourOpen && <WalkPad />}
+      {/* Hiện cả lúc chạy tour để tour khoanh được (lúc đó nhân vật chưa đi được). */}
+      {!keyboardEnabled && <WalkPad />}
 
       <div className="hud-bottom">
         {/* Đổi nút: nút cũ ẩn hẳn rồi nút mới mới hiện, tránh hai nút chen nhau trên màn hẹp. */}
