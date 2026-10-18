@@ -290,6 +290,22 @@ function Pond({ spot }: { spot: Spot }) {
 }
 
 /** Cột nước giữa đài phun: các giọt bay theo đường parabol. */
+/** Sân lát đá tròn quanh đài phun nước: tâm quảng trường. */
+function PlazaPaving({ spot }: { spot: Spot }) {
+  return (
+    <group position={[spot.pos.x, 0.015, spot.pos.z]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh receiveShadow>
+        <circleGeometry args={[3.6, 48]} />
+        <meshStandardMaterial color="#ecd9c2" />
+      </mesh>
+      <mesh position={[0, 0, 0.005]} receiveShadow>
+        <circleGeometry args={[3.25, 48]} />
+        <meshStandardMaterial color="#fff2dc" />
+      </mesh>
+    </group>
+  )
+}
+
 function FountainSpray({ spot }: { spot: Spot }) {
   const N = 18
   const ref = useRef<THREE.InstancedMesh>(null)
@@ -428,7 +444,7 @@ export function Windmill(props: { position: [number, number, number]; rotY?: num
   )
 }
 
-/** Các điểm nhấn trên đảo chính: hồ sen + thác, đài phun nước, chợ hoa, vườn hoa, cắm trại, cổng hoa, đèn lồng. */
+/** Các điểm nhấn trên đảo chính: quảng trường có đài phun nước, hồ sen + thác, chợ hoa, vườn hoa, cổng hoa, đèn lồng. */
 export function Vignettes() {
   const batches = useMemo(() => buildVignettes(), [])
   const pond = spots.find((s) => s.kind === 'pond')
@@ -438,6 +454,7 @@ export function Vignettes() {
     <group>
       <Batches batches={batches} shadows={!isMobile} />
       {pond && <Pond spot={pond} />}
+      {fountain && <PlazaPaving spot={fountain} />}
       {fountain && <FountainSpray spot={fountain} />}
       {camp && <Campfire spot={camp} />}
       <FlowerArch />

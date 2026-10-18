@@ -3,16 +3,15 @@ import { departments, GIFT_INDEX } from '../data/departments'
 import { nextStationIndex, stationStatus, useJourney } from '../store/useJourney'
 import { bindLabelElement } from '../scene/labels'
 import { bonusSide } from '../scene/path'
-import { photoSpots } from '../scene/route'
+import { skyIslands } from '../scene/landmarks'
 
-/** Lớp nhãn HTML cho các trạm, hộp quà và góc chụp ảnh trên đảo phụ; vị trí do LabelProjector cập nhật. */
+/** Lớp nhãn HTML cho các trạm, hộp quà và tên các đảo phụ; vị trí do LabelProjector cập nhật. */
 export function LabelLayer() {
   const phase = useJourney((s) => s.phase)
   const visited = useJourney((s) => s.visited)
   const allVisited = visited.every(Boolean)
   const visible = phase !== 'intro' && phase !== 'pick'
   const bonuses = useJourney((s) => s.bonuses)
-  const atSpot = useJourney((s) => s.atSpot)
   const suggested = phase === 'journey' ? nextStationIndex(visited) : -1
 
   const giftState = !allVisited ? 'locked' : phase === 'gift' ? 'available suggested' : 'visited'
@@ -44,9 +43,9 @@ export function LabelLayer() {
           {giftText}
         </div>
       </div>
-      {photoSpots.map((p) => (
-        <div key={`spot-${p.index}`} className="label-anchor" ref={(el) => bindLabelElement(`spot-${p.index}`, el)}>
-          <div className={`station-label spot ${atSpot === p.index ? 'visited' : ''}`}>📸 {p.island.name}</div>
+      {skyIslands.map((s, i) => (
+        <div key={s.key} className="label-anchor" ref={(el) => bindLabelElement(`island-${i}`, el)}>
+          <div className="station-label spot">{s.name}</div>
         </div>
       ))}
       {bonuses.map(({ stage, index }, i) => {

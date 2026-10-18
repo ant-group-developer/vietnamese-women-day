@@ -68,11 +68,15 @@ export function FloatingIsland({ rx, rz, depth = 1, seed = 2010, rocks: rockCoun
   )
 }
 
+/** Đảo chính: vài khối đảo nổi chồng lên nhau thành hình lưỡi liềm ôm cung đường (mặt cỏ cùng độ cao nên liền một mảng). */
 export function Island() {
-  const { center, rx, rz } = layout.island
   return (
-    <group position={[center.x, 0, center.z]}>
-      <FloatingIsland rx={rx} rz={rz} />
-    </group>
+    <>
+      {layout.discs.map((d, i) => (
+        <group key={i} position={[d.center.x, d.top, d.center.z]}>
+          <FloatingIsland rx={d.rx} rz={d.rz} seed={2010 + i} rocks={Math.round((d.rx + d.rz) * 1.1)} />
+        </group>
+      ))}
+    </>
   )
 }

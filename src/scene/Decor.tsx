@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { layout, seededRandom } from './path'
+import { insideMain, layout, seededRandom } from './path'
 import { isMobile } from './utils'
 import { isReserved } from './landmarks'
 import { onWalkway } from './route'
@@ -14,7 +14,7 @@ type DecorKind = 'tree' | 'bush' | 'flower' | 'grass' | 'rock' | 'mushroom' | 's
 const KINDS: Record<DecorKind, { models: string[]; size: number }> = {
   tree: {
     models: ['tree_default', 'tree_oak', 'tree_fat', 'tree_detailed', 'tree_small', 'tree_cone', 'tree_blocks', 'tree_pineRoundA', 'tree_pineRoundC', 'tree_simple'],
-    size: 2.1,
+    size: 1.9,
   },
   bush: { models: ['plant_bush', 'plant_bushLarge', 'plant_bushDetailed', 'plant_bushSmall'], size: 0.85 },
   flower: {
@@ -44,40 +44,68 @@ interface DecorItem extends Placement {
   blossom: boolean
 }
 
+/**
+ * Trang trí ngẫu nhiên, gom có chủ đích cho đỡ rối: cây, bụi, đá, gốc cây xếp thành dải dọc viền đảo
+ * (khoảng trong đảo để trống làm bãi cỏ), hoa gom thành vài khóm nhỏ thay vì rải lẻ khắp nơi.
+ */
 function buildDecor(): DecorItem[] {
   const rnd = seededRandom(20102026)
-  const { center, rx, rz } = layout.island
   const samples = layout.curve.getSpacedPoints(300)
   const houses = [...layout.stations.map((s) => s.housePos), layout.gift.housePos]
   /** Chừa chỗ cho quà bóng bay đáp xuống. */
   const bonusSpots = layout.stations.map((s) => s.bonusPos)
   const items: DecorItem[] = []
-  const target = isMobile ? 80 : 160
-  let attempts = 0
-  while (items.length < target && attempts < 5000) {
-    attempts++
+  const free = (p: THREE.Vector3, gap: number) =>
+    !samples.some((s) => s.distanceToSquared(p) < 2.0 * 2.0) &&
+    !houses.some((h) => h.distanceToSquared(p) < 2.9 * 2.9) &&
+    !bonusSpots.some((b) => b.distanceToSquared(p) < 1.5 * 1.5) &&
+    !isReserved(p, 0.5) &&
+    !onWalkway(p, 0.4) &&
+    !items.some((it) => (it.pos[0] - p.x) ** 2 + (it.pos[2] - p.z) ** 2 < gap * gap)
+  /** Điểm ngẫu nhiên trong một khối đảo chính bất kỳ (khối lớn được chọn nhiều hơn). */
+  const discs = layout.discs
+  const areas = discs.map((d) => d.rx * d.rz)
+  const totalArea = areas.reduce((a, b) => a + b, 0)
+  const randomOnMain = () => {
+    let k = rnd() * totalArea
+    let d = discs[0]
+    for (let i = 0; i < discs.length; i++) {
+      k -= areas[i]
+      if (k <= 0) {
+        d = discs[i]
+        break
+      }
+    }
     const a = rnd() * Math.PI * 2
     const r = Math.sqrt(rnd())
-    const x = center.x + Math.cos(a) * r * (rx - 1.2)
-    const z = center.z + Math.sin(a) * r * (rz - 1.2)
-    const p = new THREE.Vector3(x, 0, z)
-    if (samples.some((s) => s.distanceToSquared(p) < 1.9 * 1.9)) continue
-    if (houses.some((h) => h.distanceToSquared(p) < 2.6 * 2.6)) continue
-    if (bonusSpots.some((b) => b.distanceToSquared(p) < 1.5 * 1.5)) continue
-    if (isReserved(p, 0.4) || onWalkway(p, 0.4)) continue
-    if (items.some((it) => (it.pos[0] - x) ** 2 + (it.pos[2] - z) ** 2 < 0.8)) continue
+    return new THREE.Vector3(d.center.x + Math.cos(a) * r * d.rx, 0, d.center.z + Math.sin(a) * r * d.rz)
+  }
+  const pick = <K extends DecorKind>(kind: K) => KINDS[kind].models[Math.floor(rnd() * KINDS[kind].models.length)]
+
+  // Dải viền: cây là chính, xen bụi, đá, gốc cây.
+  const rimTarget = isMobile ? 34 : 56
+  for (let attempts = 0, n = 0; n < rimTarget && attempts < 6000; attempts++) {
+    const p = randomOnMain()
+    // Chỉ lấy dải sát mép đảo (cách mép 0.8–3.5 m).
+    if (!insideMain(p.x, p.z, 0.8) || insideMain(p.x, p.z, 3.5)) continue
+    if (!free(p, 1.7)) continue
     const k = rnd()
-    const kind: DecorKind =
-      k < 0.2 ? 'tree' : k < 0.33 ? 'bush' : k < 0.68 ? 'flower' : k < 0.8 ? 'grass' : k < 0.88 ? 'rock' : k < 0.96 ? 'mushroom' : 'stump'
-    const models = KINDS[kind].models
-    items.push({
-      kind,
-      model: models[Math.floor(rnd() * models.length)],
-      blossom: kind === 'tree' && rnd() < 0.3,
-      pos: [x, 0, z],
-      rot: rnd() * Math.PI * 2,
-      scale: 0.8 + rnd() * 0.45,
-    })
+    const kind: DecorKind = k < 0.55 ? 'tree' : k < 0.8 ? 'bush' : k < 0.92 ? 'rock' : 'stump'
+    items.push({ kind, model: pick(kind), blossom: kind === 'tree' && rnd() < 0.35, pos: [p.x, 0, p.z], rot: rnd() * Math.PI * 2, scale: 0.85 + rnd() * 0.3 })
+    n++
+  }
+
+  // Khóm hoa: 4–6 bông quanh một tâm, nằm giữa viền và đường.
+  const clusters = isMobile ? 5 : 8
+  for (let attempts = 0, n = 0; n < clusters && attempts < 1500; attempts++) {
+    const c = randomOnMain()
+    if (!insideMain(c.x, c.z, 3) || !free(c, 2.2)) continue
+    const count = 4 + Math.floor(rnd() * 3)
+    for (let i = 0; i < count; i++) {
+      const q = c.clone().add(new THREE.Vector3((rnd() - 0.5) * 1.4, 0, (rnd() - 0.5) * 1.4))
+      items.push({ kind: 'flower', model: pick('flower'), blossom: false, pos: [q.x, 0, q.z], rot: rnd() * Math.PI * 2, scale: 0.9 + rnd() * 0.3 })
+    }
+    n++
   }
   return items
 }
@@ -195,7 +223,8 @@ function buildClouds(): CloudDef[] {
   for (let i = 0; i < n; i++) {
     clouds.push({
       model: i % CLOUD_URLS.length,
-      pos: [center.x + (rnd() - 0.5) * (rx * 2 + 16), 5.5 + rnd() * 4, center.z + (rnd() - 0.5) * (rz * 2 + 10) - 4],
+      // Mây trôi phía sau đảo (làm nền trời), không bay ngang qua đảo che mất nhà và đường.
+      pos: [center.x + (rnd() - 0.5) * (rx * 2 + 16), 4 + rnd() * 5, center.z - rz - 6 - rnd() * 12],
       rot: (rnd() - 0.5) * 0.8,
       scale: 0.8 + rnd() * 0.8,
       speed: 0.25 + rnd() * 0.35,

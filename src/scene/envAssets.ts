@@ -39,7 +39,6 @@ export const PALETTE: Record<string, string> = {
   stone: '#e6dbe2',
   stoneDark: '#cdbdc8',
   leafsFall: '#ffb38a',
-  corn: '#ffd166',
 }
 
 export interface Part {

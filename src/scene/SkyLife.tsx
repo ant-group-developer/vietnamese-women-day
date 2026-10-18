@@ -142,7 +142,7 @@ function useButterflies(): Flapper[] {
   return useMemo(() => {
     const rnd = seededRandom(808)
     const { center, rx, rz } = layout.island
-    const n = isMobile ? 10 : 22
+    const n = isMobile ? 6 : 10
     const out: Flapper[] = []
     for (let tries = 0; out.length < n && tries < 500; tries++) {
       const x = center.x + (rnd() * 2 - 1) * rx

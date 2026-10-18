@@ -1,12 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { CHARACTER_LIST } from '../scene/characters'
 import { CharacterAvatar } from './CharacterAvatar'
-import { useJourney } from '../store/useJourney'
+import { SPEED_MAX, SPEED_MIN, useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
 import { VolumeIcon } from './icons'
-import { trackEvent } from '../utils/ga'
 
-/** Hộp cài đặt: mở riêng phần chọn nhân vật dẫn đường, phần chỉnh âm lượng hoặc ảnh kỷ niệm vừa chụp. */
+/** Hộp cài đặt: mở riêng phần chọn nhân vật dẫn đường (kèm tốc độ đi) hoặc phần chỉnh âm lượng. */
 export function SettingsModal() {
   const panel = useJourney((s) => s.settingsOpen)
   const { closeSettings } = useJourney.getState()
@@ -23,7 +22,7 @@ export function SettingsModal() {
         >
           <motion.div
             key={panel}
-            className={`settings-card ${panel === 'audio' ? 'audio-card' : ''} ${panel === 'photo' ? 'photo-card' : ''}`}
+            className={`settings-card ${panel === 'audio' ? 'audio-card' : ''}`}
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: 40, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -33,16 +32,10 @@ export function SettingsModal() {
             <button className="modal-close settings-close" onClick={closeSettings} aria-label="Đóng">
               ✕
             </button>
-            {panel === 'photo' ? (
-              <PhotoPanel />
-            ) : (
-              <>
-                {panel === 'character' ? <CharacterPanel /> : <AudioPanel />}
-                <button className="btn" onClick={closeSettings}>
-                  Xong 💕
-                </button>
-              </>
-            )}
+            {panel === 'character' ? <CharacterPanel /> : <AudioPanel />}
+            <button className="btn" onClick={closeSettings}>
+              Xong 💕
+            </button>
           </motion.div>
         </motion.div>
       )}
@@ -78,7 +71,33 @@ function CharacterPanel() {
           </motion.button>
         ))}
       </div>
+      <SpeedRow />
     </>
+  )
+}
+
+/** Thanh chỉnh tốc độ đi của bạn đồng hành (0.5× – 2×). */
+function SpeedRow() {
+  const speed = useJourney((s) => s.speed)
+  const { setSpeed } = useJourney.getState()
+  const pct = ((speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100
+  return (
+    <div className="speed-row">
+      <span className="speed-label">🐢</span>
+      <input
+        type="range"
+        className="volume-slider"
+        min={SPEED_MIN}
+        max={SPEED_MAX}
+        step={0.1}
+        value={speed}
+        style={{ ['--p' as string]: `${pct}%` }}
+        onChange={(e) => setSpeed(Number(e.target.value))}
+        aria-label="Tốc độ di chuyển"
+      />
+      <span className="speed-label">🐇</span>
+      <span className="volume-value">{speed.toFixed(1)}×</span>
+    </div>
   )
 }
 
@@ -113,51 +132,6 @@ function AudioPanel() {
           aria-label="Âm lượng"
         />
         <span className="volume-value">{Math.round(shown * 100)}%</span>
-      </div>
-    </>
-  )
-}
-
-const PHOTO_NAME = 'anh-ky-niem-20-10.jpg'
-
-function PhotoPanel() {
-  const photo = useJourney((s) => s.photo)
-  const { closeSettings } = useJourney.getState()
-  if (!photo) return null
-  const file = new File([photo.blob], PHOTO_NAME, { type: photo.blob.type })
-  // Điện thoại: mở bảng chia sẻ của hệ thống (Zalo, Messenger, lưu vào Ảnh...).
-  const canShare = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
-  const share = async () => {
-    try {
-      await navigator.share({ files: [file], title: 'Ảnh kỷ niệm 20/10' })
-      trackEvent('photo_share')
-    } catch {
-      /* người dùng đóng bảng chia sẻ */
-    }
-  }
-
-  return (
-    <>
-      <h2>Ảnh kỷ niệm 📸</h2>
-      <p className="settings-sub">Lưu lại khoảnh khắc trên đảo hoa nhé!</p>
-      <img className="photo-preview" src={photo.url} alt="Ảnh kỷ niệm 20/10" />
-      <div className="photo-actions">
-        {canShare && (
-          <button className="btn" onClick={share}>
-            Chia sẻ 💌
-          </button>
-        )}
-        <a
-          className={`btn ${canShare ? 'ghost' : ''}`}
-          href={photo.url}
-          download={PHOTO_NAME}
-          onClick={() => trackEvent('photo_download')}
-        >
-          Tải ảnh ⬇️
-        </a>
-        <button className="btn ghost" onClick={closeSettings}>
-          Chụp lại 🔄
-        </button>
       </div>
     </>
   )

@@ -15,7 +15,6 @@ import { isMobile } from './utils'
 import { LabelProjector } from './labels'
 import { Vignettes } from './Vignettes'
 import { SkyIslands } from './SkyIslands'
-import { SnapshotBinder } from './snapshot'
 import { SkyLife } from './SkyLife'
 import { Wanderers } from './Wanderers'
 
@@ -111,7 +110,6 @@ export function Scene() {
         </Suspense>
         <CameraRig />
         <LabelProjector />
-        <SnapshotBinder />
       </Canvas>
     </div>
   )

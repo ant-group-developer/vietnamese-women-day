@@ -6,11 +6,12 @@ import { isStationAvailable, useJourney } from '../store/useJourney'
 import { GIFT_INDEX } from '../data/departments'
 import { canControl, keyboard, stationAt } from './keyboard'
 import { mascot } from './path'
-import { diffU, photoSpots, route, routePoint, routeStationU, routeTangent, spotAt, wrapU } from './route'
+import { diffU, route, routePoint, routeStationU, routeTangent, wrapU } from './route'
 import { playStep } from '../audio/sound'
 import { CHARACTERS, type CharacterSpec } from './characters'
 
-const SPEED = 2.5 // đơn vị/giây
+/** Tốc độ đi gốc (đơn vị/giây), nhân với hệ số tốc độ người xem chọn. */
+const SPEED = 2.5
 const FADE = 0.25
 
 const tmpDir = new THREE.Vector3()
@@ -78,7 +79,7 @@ function PetModel({ spec, walkingRef, arrivedAt }: { spec: CharacterSpec; walkin
     if (walkingRef.current) {
       if (current.current !== move) play(move)
       // Khớp tốc độ clip với tốc độ di chuyển để chân không trượt (có giới hạn cho đỡ quơ chân).
-      if (moving) moving.timeScale = Math.min(SPEED / (spec.moveSpeed * spec.scale), spec.maxTimeScale ?? Infinity)
+      if (moving) moving.timeScale = Math.min((SPEED * useJourney.getState().speed) / (spec.moveSpeed * spec.scale), (spec.maxTimeScale ?? Infinity) * Math.max(1, useJourney.getState().speed))
     } else if (current.current === move && move !== idle) {
       play(idle)
     } else if (moving && move === idle) {
@@ -110,16 +111,16 @@ export function Character() {
   const walkingRef = useRef(false)
   const arrivedAt = useRef(0)
 
-  useFrame(({ clock, camera }, dt) => {
+  useFrame(({ clock }, dt) => {
     const time = clock.elapsedTime
     const st = useJourney.getState()
     // Giới hạn dt để không nhảy cóc khi tab bị tạm dừng, nhưng vẫn đủ lớn khi máy yếu.
-    const step = (SPEED * Math.min(dt, 0.1)) / route.length
+    const step = (SPEED * st.speed * Math.min(dt, 0.1)) / route.length
     let walking = false
 
     if (keyboard.dir !== 0 && canControl()) {
       // Đi bằng bàn phím: huỷ chỗ đang đi tới, tiến/lùi dọc đường (đường khép kín nên đi mãi một chiều là qua hết mọi nơi).
-      if (st.targetIndex !== null || st.targetSpot !== null) useJourney.setState({ targetIndex: null, targetSpot: null, openGiftOnArrive: false })
+      if (st.targetIndex !== null) useJourney.setState({ targetIndex: null, openGiftOnArrive: false })
       mascot.t = wrapU(mascot.t + keyboard.dir * step)
       walking = true
       heading.current.lerp(routeTangent(mascot.t, tmpDir).multiplyScalar(keyboard.dir), 0.18)
@@ -130,21 +131,14 @@ export function Character() {
         const giftReady = at === GIFT_INDEX && isStationAvailable(st, GIFT_INDEX)
         useJourney.setState({ currentIndex: at, phase: giftReady ? 'gift' : 'journey' })
       }
-      const spot = spotAt(mascot.t)
-      if (spot !== st.atSpot) {
-        if (spot >= 0) st.arriveSpot(spot)
-        else useJourney.setState({ atSpot: -1 })
-      }
-    } else if (st.targetIndex !== null || st.targetSpot !== null) {
-      const target = st.targetIndex !== null ? routeStationU(st.targetIndex) : photoSpots[st.targetSpot!].u
+    } else if (st.targetIndex !== null) {
+      const target = routeStationU(st.targetIndex)
       // Đi theo chiều ngắn hơn quanh vòng.
       const diff = diffU(mascot.t, target)
-      if (st.atSpot >= 0) useJourney.setState({ atSpot: -1 })
       if (Math.abs(diff) <= step) {
         mascot.t = target
         arrivedAt.current = time
-        if (st.targetIndex !== null) st.arrive(st.targetIndex)
-        else st.arriveSpot(st.targetSpot!)
+        st.arrive(st.targetIndex)
       } else {
         mascot.t = wrapU(mascot.t + Math.sign(diff) * step)
         walking = true
@@ -154,11 +148,6 @@ export function Character() {
     }
     routePoint(mascot.t, mascot.pos)
 
-    // Đứng ở góc chụp ảnh: quay mặt về phía camera để tạo dáng.
-    if (!walking && useJourney.getState().atSpot >= 0) {
-      tmpDir.copy(camera.position).sub(mascot.pos).setY(0).normalize()
-      heading.current.lerp(tmpDir, 0.08)
-    }
     mascot.walking = walking
     walkingRef.current = walking
 

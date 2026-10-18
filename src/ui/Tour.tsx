@@ -53,13 +53,7 @@ function buildSteps(): Step[] {
       title: 'Đi tiếp',
       text: 'Chưa biết đi đâu? Bấm nút này để tới phòng ban gần nhất mà bạn chưa ghé.',
     },
-    { target: 'character', icon: '🐾', title: 'Đổi bạn đồng hành', text: 'Chọn một con vật khác dẫn đường cho bạn.' },
-    {
-      target: 'photo',
-      icon: '📸',
-      title: 'Chụp ảnh kỷ niệm',
-      text: 'Chụp lại hòn đảo cùng bạn đồng hành trong khung ảnh 20/10 để lưu về máy hoặc chia sẻ.',
-    },
+    { target: 'character', icon: '🐾', title: 'Bạn đồng hành', text: 'Chọn con vật dẫn đường và chỉnh tốc độ đi nhanh hay chậm.' },
     { target: 'audio', icon: '🔊', title: 'Âm lượng', text: 'Chỉnh to nhỏ hoặc tắt hẳn nhạc nền.' },
     {
       target: 'bonus',

@@ -2,19 +2,13 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { bonusAtStation, bonusTitle, droppedBonuses, nextStationIndex, useJourney } from '../store/useJourney'
-import { CameraIcon, FilmIcon, PawIcon, VolumeIcon } from './icons'
+import { FilmIcon, PawIcon, VolumeIcon } from './icons'
 import { keyboardEnabled } from '../scene/keyboard'
-import { takePhoto } from './photoFrame'
-import { playSfx } from '../audio/sound'
-import { trackEvent } from '../utils/ga'
-import { photoSpots } from '../scene/route'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
   const visited = useJourney((s) => s.visited)
   const targetIndex = useJourney((s) => s.targetIndex)
-  const targetSpot = useJourney((s) => s.targetSpot)
-  const atSpot = useJourney((s) => s.atSpot)
   const openedIndex = useJourney((s) => s.openedIndex)
   const currentIndex = useJourney((s) => s.currentIndex)
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
@@ -25,7 +19,7 @@ export function HUD() {
   const audioOn = useJourney((s) => s.audioOn)
   const bonuses = useJourney((s) => s.bonuses)
   const bonusLandedAt = useJourney((s) => s.bonusLandedAt)
-  const { goTo, openGift, openSettings, playBonus, tapBonus, showPhoto } = useJourney.getState()
+  const { goTo, openGift, openSettings, playBonus, tapBonus } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
   const [flowerToast, setFlowerToast] = useState<string | null>(null)
@@ -74,30 +68,11 @@ export function HUD() {
     return () => window.removeEventListener('pointerdown', close)
   }, [bonusMenu])
 
-  // Chụp ảnh kỷ niệm: nháy đèn flash rồi mở hộp xem ảnh.
-  const [flashAt, setFlashAt] = useState(0)
-  const [shooting, setShooting] = useState(false)
-  const snap = async () => {
-    if (shooting) return
-    setShooting(true)
-    playSfx('pop')
-    setFlashAt(Date.now())
-    try {
-      const blob = await takePhoto()
-      if (blob) {
-        showPhoto({ url: URL.createObjectURL(blob), blob })
-        trackEvent('photo_capture', { flowers: useJourney.getState().visited.filter(Boolean).length })
-      }
-    } finally {
-      setShooting(false)
-    }
-  }
-
   if (phase !== 'journey' && phase !== 'gift') return null
 
   const count = visited.filter(Boolean).length
   const next = nextStationIndex(visited)
-  const idle = targetIndex === null && targetSpot === null && openedIndex === null
+  const idle = targetIndex === null && openedIndex === null
 
   // Quà bóng bay chưa mở mà nhân vật đang đứng cạnh: nút dưới cùng gợi ý mở quà trước.
   const waitingSlot = bonusAtStation(bonuses, currentIndex, ['ready'])
@@ -106,8 +81,7 @@ export function HUD() {
   const dropped = droppedBonuses(bonuses)
   let action: { label: string; onClick: () => void; cls?: string } | null = null
   if (idle) {
-    if (atSpot >= 0) action = { label: 'Chụp ảnh tại đây 📸', onClick: snap, cls: 'gift' }
-    else if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: () => tapBonus(waitingSlot), cls: 'gift' }
+    if (bonusWaiting) action = { label: 'Mở quà bất ngờ 🎈', onClick: () => tapBonus(waitingSlot), cls: 'gift' }
     else if (phase === 'gift') action = { label: 'Mở quà\u00a0🎁', onClick: openGift, cls: 'gift' }
     else if (next < STATION_COUNT) action = { label: `Đi tiếp → ${departments[next].name}`, onClick: () => goTo(next) }
     else if (currentIndex !== GIFT_INDEX) action = { label: 'Đến hộp quà\u00a0🎁', onClick: () => goTo(GIFT_INDEX), cls: 'gift' }
@@ -122,10 +96,6 @@ export function HUD() {
     toast = 'Có quà bất ngờ! Bấm vào để mở nhé 🎈'
   } else if (flowerToast) {
     toast = flowerToast
-  } else if (targetSpot !== null) {
-    toast = `Đang sang ${photoSpots[targetSpot].island.name}...`
-  } else if (atSpot >= 0 && !shooting) {
-    toast = `Đã tới ${photoSpots[atSpot].island.name}! Tạo dáng chụp ảnh nào 📸`
   } else if (targetIndex !== null) {
     toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà...\u00a0🎁' : `Đang đi tới ${departments[targetIndex].name}...`
   } else if (count === 0 && currentIndex === -1) {
@@ -152,11 +122,8 @@ export function HUD() {
           </div>
         </motion.div>
         <div className="hud-actions">
-          <button className="icon-btn" onClick={() => openSettings('character')} data-tour="character" title="Đổi nhân vật dẫn đường" aria-label="Đổi nhân vật">
+          <button className="icon-btn" onClick={() => openSettings('character')} data-tour="character" title="Bạn đồng hành và tốc độ đi" aria-label="Bạn đồng hành và tốc độ đi">
             <PawIcon />
-          </button>
-          <button className="icon-btn" onClick={snap} disabled={shooting} data-tour="photo" title="Chụp ảnh kỷ niệm" aria-label="Chụp ảnh kỷ niệm">
-            <CameraIcon />
           </button>
           <button className="icon-btn" onClick={() => openSettings('audio')} data-tour="audio" title="Âm lượng" aria-label="Âm lượng">
             <VolumeIcon level={audioOn ? volume : 0} />
@@ -198,8 +165,6 @@ export function HUD() {
           )}
         </div>
       </div>
-
-      {flashAt > 0 && <div key={flashAt} className="photo-flash" aria-hidden />}
 
       <AnimatePresence>
         {toast && (

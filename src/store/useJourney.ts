@@ -18,13 +18,7 @@ export interface BonusSlot {
   index: number
 }
 /** Hộp cài đặt: chọn nhân vật hoặc chỉnh âm lượng. */
-export type SettingsPanel = 'character' | 'audio' | 'photo'
-
-/** Ảnh kỷ niệm vừa chụp (đã ghép khung), giữ cả blob để tải về hoặc chia sẻ. */
-export interface Photo {
-  url: string
-  blob: Blob
-}
+export type SettingsPanel = 'character' | 'audio'
 
 interface JourneyState {
   phase: Phase
@@ -32,16 +26,14 @@ interface JourneyState {
   currentIndex: number
   /** Trạm đang đi tới, null nếu đứng yên. */
   targetIndex: number | null
-  /** Góc chụp ảnh trên đảo phụ đang đi tới (chỉ số trong photoSpots), null nếu không. */
-  targetSpot: number | null
-  /** Góc chụp ảnh đang đứng, -1 nếu không đứng ở góc nào. */
-  atSpot: number
   visited: boolean[]
   /** Trạm đang mở popup. */
   openedIndex: number | null
   audioOn: boolean
   /** Âm lượng tổng (0–1), áp cho nhạc nền, hiệu ứng và video. */
   volume: number
+  /** Hệ số tốc độ đi của nhân vật (0.5–2, mặc định 1). */
+  speed: number
   /** Thời điểm yêu cầu đưa camera về góc nhìn mặc định sau nhân vật. */
   cameraResetAt: number
   /** Thời điểm và trạm vừa nhận hoa (để trigger animation HUD). */
@@ -51,8 +43,6 @@ interface JourneyState {
   tourOpen: boolean
   /** Hộp cài đặt đang mở (null = đóng). */
   settingsOpen: SettingsPanel | null
-  /** Ảnh kỷ niệm mới nhất (hiện trong hộp 'photo'). */
-  photo: Photo | null
   /** Nhân vật dẫn đường đã chọn. */
   character: CharacterId
   /** Thời điểm bấm vào hộp quà khi còn khoá (để lắc hộp và hiện nhắc nhở). */
@@ -73,16 +63,11 @@ interface JourneyState {
   closeTour: () => void
   openSettings: (panel: SettingsPanel) => void
   closeSettings: () => void
-  /** Hiện ảnh kỷ niệm vừa chụp (thu hồi ảnh cũ). */
-  showPhoto: (photo: Photo) => void
   setCharacter: (id: CharacterId) => void
   /** Chọn nhân vật ở màn đầu rồi vào hành trình; dontShowAgain thì lần sau bỏ qua màn chọn. */
   confirmCharacter: (id: CharacterId, dontShowAgain: boolean) => void
   goTo: (index: number) => void
   arrive: (index: number) => void
-  /** Đi tới góc chụp ảnh trên đảo phụ. */
-  goToSpot: (i: number) => void
-  arriveSpot: (i: number) => void
   closeModal: () => void
   openGift: () => void
   /** Bấm vào hộp quà: còn khoá thì nhắc, đủ hoa thì chạy tới và mở. */
@@ -100,6 +85,7 @@ interface JourneyState {
   continueJourney: () => void
   toggleAudio: () => void
   setVolume: (v: number) => void
+  setSpeed: (v: number) => void
   resetCamera: () => void
 }
 
@@ -113,6 +99,17 @@ const TOUR_KEY = 'vn-woman-day:tour-seen'
 const CHARACTER_KEY = 'vn-woman-day:character'
 const PICK_SKIP_KEY = 'vn-woman-day:pick-skip'
 const VOLUME_KEY = 'vn-woman-day:volume'
+const SPEED_KEY = 'vn-woman-day:speed'
+export const SPEED_MIN = 0.5
+export const SPEED_MAX = 2
+function savedSpeed(): number {
+  try {
+    const v = parseFloat(localStorage.getItem(SPEED_KEY) ?? '')
+    return Number.isFinite(v) ? Math.min(SPEED_MAX, Math.max(SPEED_MIN, v)) : 1
+  } catch {
+    return 1
+  }
+}
 function savedVolume(): number {
   try {
     const v = parseFloat(localStorage.getItem(VOLUME_KEY) ?? '')
@@ -155,18 +152,16 @@ export const useJourney = create<JourneyState>((set, get) => ({
   phase: 'intro',
   currentIndex: -1,
   targetIndex: null,
-  targetSpot: null,
-  atSpot: -1,
   visited: freshVisited(),
   openedIndex: null,
   audioOn: true,
   volume: savedVolume(),
+  speed: savedSpeed(),
   cameraResetAt: 0,
   lastFlowerAt: 0,
   lastVisitedIndex: -1,
   tourOpen: false,
   settingsOpen: null,
-  photo: null,
   character: savedCharacter(),
   giftHintAt: 0,
   openGiftOnArrive: false,
@@ -180,11 +175,6 @@ export const useJourney = create<JourneyState>((set, get) => ({
   closeTour: () => set({ tourOpen: false }),
   openSettings: (panel) => set({ settingsOpen: panel }),
   closeSettings: () => set({ settingsOpen: null }),
-  showPhoto: (photo) => {
-    const old = get().photo
-    if (old) URL.revokeObjectURL(old.url)
-    set({ photo, settingsOpen: 'photo' })
-  },
   confirmCharacter: (id, dontShowAgain) => {
     get().setCharacter(id)
     try {
@@ -214,20 +204,8 @@ export const useJourney = create<JourneyState>((set, get) => ({
       return
     }
     // Có thể đổi hướng ngay cả khi đang đi
-    set({ targetIndex: index, targetSpot: null, openGiftOnArrive: false })
+    set({ targetIndex: index, openGiftOnArrive: false })
   },
-
-  goToSpot: (i) => {
-    const { openedIndex, phase, tourOpen, settingsOpen, atSpot, targetIndex } = get()
-    if (openedIndex !== null || tourOpen || settingsOpen) return
-    if (phase !== 'journey' && phase !== 'gift') return
-    if (atSpot === i && targetIndex === null) return
-    set({ targetSpot: i, targetIndex: null, openGiftOnArrive: false })
-  },
-
-  // Tới đảo phụ thì rời khỏi trạm/hộp quà đang đứng.
-  arriveSpot: (i) =>
-    set((s) => ({ atSpot: i, targetSpot: null, currentIndex: -1, phase: s.phase === 'gift' ? 'journey' : s.phase })),
 
   arrive: (index) => {
     if (index === GIFT_INDEX) {
@@ -313,6 +291,15 @@ export const useJourney = create<JourneyState>((set, get) => ({
     set({ phase: 'journey', targetIndex: null, openedIndex: null, openGiftOnArrive: false, cameraResetAt: Date.now() }),
 
   toggleAudio: () => set((s) => ({ audioOn: !s.audioOn })),
+  setSpeed: (v) => {
+    const speed = Math.min(SPEED_MAX, Math.max(SPEED_MIN, v))
+    try {
+      localStorage.setItem(SPEED_KEY, String(speed))
+    } catch {
+      /* bỏ qua nếu trình duyệt chặn localStorage */
+    }
+    set({ speed })
+  },
   setVolume: (v) => {
     const volume = Math.min(1, Math.max(0, v))
     try {

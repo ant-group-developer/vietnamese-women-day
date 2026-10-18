@@ -11,7 +11,9 @@ import { mergePieces, natureUrl, PALETTE, recolorTexture, townUrl, type PiecePla
 import { InstancedModel, type Placement } from './Decor'
 
 /** Nhà lắp từ bộ Kenney Fantasy Town Kit: nền 2x2 ô, tường 1 tầng, mái cao 4 góc. */
-const HOUSE_SCALE = 0.9
+const HOUSE_SCALE = 1.25
+/** Đổi từ toạ độ nhà gốc (cỡ 0.9) sang cỡ hiện tại, cho nhãn, bóng bay, hoa trên mái. */
+const K = HOUSE_SCALE / 0.9
 const PIECE_NAMES = ['wall', 'wall-door', 'wall-window-shutters', 'wall-window-round', 'wall-window-small', 'roof-high-corner', 'chimney'] as const
 const PIECE_URLS = PIECE_NAMES.map(townUrl)
 PIECE_URLS.forEach((u) => useGLTF.preload(u))
@@ -87,7 +89,7 @@ export function Station({ index, dept }: Props) {
   const { housePos, houseRotY } = layout.stations[index]
 
   useEffect(() => {
-    setLabelTarget(`station-${index}`, housePos.clone().add(new THREE.Vector3(0, 3.3, 0)))
+    setLabelTarget(`station-${index}`, housePos.clone().add(new THREE.Vector3(0, 3.3 * K, 0)))
   }, [index, housePos])
 
   useFrame(({ clock }) => {
@@ -113,7 +115,7 @@ export function Station({ index, dept }: Props) {
   return (
     <group position={housePos} rotation={[0, houseRotY, 0]}>
       {/* Vòng sáng gợi ý trạm tiếp theo */}
-      <mesh ref={ring} position={[0, 0.06, 1.2]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh ref={ring} position={[0, 0.06, 1.2 * K]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[1.1, 1.3, 40]} />
         <meshBasicMaterial color="#ff7aa8" transparent opacity={0} depthWrite={false} />
       </mesh>
@@ -137,14 +139,14 @@ export function Station({ index, dept }: Props) {
         <House color={dept.color} />
         {/* Hoa trên mái khi đã thăm */}
         {status === 'visited' && (
-          <group position={[0, 2.0, 0]}>
+          <group position={[0, 2.0 * K, 0]}>
             <InstancedModel url={natureUrl('flower_redA')} size={0.75} palette={PALETTE} paletteKey="base" items={ROOF_FLOWER} />
           </group>
         )}
         {/* Bóng bay */}
         {(
           <Float speed={2.2} rotationIntensity={0.2} floatIntensity={0.8}>
-            <group position={[0.9, 3.1, 0.2]}>
+            <group position={[0.9 * K, 3.1 * K, 0.2]}>
               <mesh castShadow>
                 <sphereGeometry args={[0.32, 24, 18]} />
                 <meshStandardMaterial color={shade(dept.color, 0.25)} />

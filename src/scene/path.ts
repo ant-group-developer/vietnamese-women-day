@@ -2,21 +2,35 @@ import * as THREE from 'three'
 import { STATION_COUNT } from '../data/departments'
 
 /**
- * Đường là một cung tròn thoai thoải chạy dọc đảo theo trục x, võng ra phía sau (xa camera).
- * Các trạm cách đều nhau trên cung, nhà nằm phía ngoài cung (sau đường) để không che nhân vật.
+ * Cả hành trình là một vòng elip lớn, đi một chiều là quay về chỗ cũ như một vòng tròn:
+ * cung phía trước (phía camera) là đường chính trên đảo chính, qua các phòng ban tới hộp quà;
+ * phần còn lại của vòng đi qua lần lượt các đảo phụ nối nhau bằng cầu (landmarks.ts, route.ts).
+ * Nhà nằm phía trong vòng (sau đường), quảng trường và hồ ở phía ngoài (trước đường, phía camera).
  */
-/** Khoảng cách (theo cung) giữa hai trạm liên tiếp. */
-const STEP = 7
-/** Bán kính cung nhỏ nhất (càng lớn càng thẳng). */
-const MIN_RADIUS = 38
-/** Nửa góc mở tối đa của cung: nhiều trạm thì cung dài ra nhưng không cong quá. */
-const MAX_HALF_ANGLE = 0.55
+/** Khoảng cách (theo đường) giữa hai trạm liên tiếp. */
+const STEP = 7.5
 /** Đoạn đường dẫn vào trước trạm đầu và đoạn đuôi sau hộp quà. */
 const LEAD_IN = 5
 const TAIL = 2.5
 export const PATH_Y = 0.08
-/** Nhà lùi về phía ngoài cung (sau đường, xa camera) so với điểm dừng. */
-const HOUSE_BACK = 2.4
+/** Nhà lùi vào phía trong vòng so với điểm dừng. */
+const HOUSE_BACK = 3.0
+/** Tỉ lệ bán trục ngang/dọc của vòng elip. */
+const LOOP_ASPECT = 1.25
+/** Ước lượng chiều dài phần vòng ngoài đường chính (đảo chính còn dư hai đầu, các đảo phụ và cầu) để chọn cỡ vòng. */
+const MAIN_EXTRA = 8
+/** Số đảo phụ trên vòng (phải khớp danh sách trong landmarks.ts). */
+export const SKY_ISLAND_COUNT = 5
+const SKY_SHARE = SKY_ISLAND_COUNT * 13 + (SKY_ISLAND_COUNT + 1) * 7.5
+
+/** Một khối đảo hình elip (trục song song x, z). */
+export interface Disc {
+  center: THREE.Vector3
+  rx: number
+  rz: number
+  /** Độ cao mặt đảo. */
+  top: number
+}
 
 export interface StationLayout {
   index: number
@@ -27,114 +41,193 @@ export interface StationLayout {
   housePos: THREE.Vector3
   /** Góc xoay quanh trục y để mặt trước nhà quay về phía đường. */
   houseRotY: number
-  /** Chỗ quà bóng bay đáp xuống nếu rơi ở trạm này: cạnh điểm dừng, phía camera, tránh đường và nhà. */
+  /** Chỗ quà bóng bay đáp xuống nếu rơi ở trạm này: cạnh điểm dừng, tránh đường và nhà. */
   bonusPos: THREE.Vector3
 }
 
 export interface PathLayout {
-  curve: THREE.CatmullRomCurve3
+  curve: THREE.Curve<THREE.Vector3>
   stations: StationLayout[]
   gift: StationLayout
-  /** Kích thước đảo (bán trục x, z) và tâm. */
+  /** Khung elip bao cả đảo chính (dùng cho mây, bóng bay, chim bay quanh đảo). */
   island: { center: THREE.Vector3; rx: number; rz: number }
+  /** Các khối ghép thành đảo chính hình lưỡi liềm ôm cung đường. */
+  discs: Disc[]
+  /** Tâm quảng trường (phía trước đường). */
+  plaza: THREE.Vector3
   length: number
 }
 
-function buildLayout(): PathLayout {
-  const total = STATION_COUNT + 1 // trạm + hộp quà
-  const span = (total - 1) * STEP
-  const radius = Math.max(MIN_RADIUS, (span + LEAD_IN + TAIL) / 2 / MAX_HALF_ANGLE)
-  // Tâm cung nằm phía camera (z dương); đỉnh cung ở z = 0.
-  const arcCenter = new THREE.Vector3(0, PATH_Y, radius)
-  /** Hướng từ tâm ra điểm trên cung ở độ dài cung s (s = 0 là đỉnh). */
-  const dirAt = (s: number) => new THREE.Vector3(Math.sin(s / radius), 0, -Math.cos(s / radius))
-  const pointAt = (s: number) => arcCenter.clone().addScaledVector(dirAt(s), radius)
-
-  const s0 = -span / 2
-  const stopS = Array.from({ length: total }, (_, i) => s0 + i * STEP)
-  const stopPoints = stopS.map(pointAt)
-  // Lấy mẫu dày trên cung để đường CatmullRom bám đúng cung tròn.
-  const points: THREE.Vector3[] = []
-  const from = s0 - LEAD_IN
-  const to = s0 + span + TAIL
-  const n = Math.ceil(to - from)
-  for (let i = 0; i <= n; i++) points.push(pointAt(from + ((to - from) * i) / n))
-
-  const curve = new THREE.CatmullRomCurve3(points, false, 'centripetal')
-  const SAMPLES = 2000
-  const samples = curve.getSpacedPoints(SAMPLES)
-  const tFor = (p: THREE.Vector3) => {
-    let best = 0
-    let bestD = Infinity
-    for (let i = 0; i < samples.length; i++) {
-      const d = samples[i].distanceToSquared(p)
-      if (d < bestD) {
-        bestD = d
-        best = i
-      }
+/** Vòng elip tâm gốc toạ độ, tham số theo chiều dài: t = 0 ở điểm xuất phát, đi từ trái sang phải phía trước rồi vòng ra sau. */
+class LoopCurve extends THREE.Curve<THREE.Vector3> {
+  readonly length: number
+  readonly ra: number
+  readonly rb: number
+  private phis: Float64Array
+  private cum: Float64Array
+  constructor(ra: number, rb: number, startPhi: number) {
+    super()
+    this.ra = ra
+    this.rb = rb
+    const M = 4096
+    this.phis = new Float64Array(M + 1)
+    this.cum = new Float64Array(M + 1)
+    let px = 0
+    let pz = 0
+    for (let i = 0; i <= M; i++) {
+      // Góc giảm dần: từ trái qua giữa phía trước sang phải, rồi vòng ra sau.
+      const phi = startPhi - (i / M) * Math.PI * 2
+      const x = ra * Math.cos(phi)
+      const z = rb * Math.sin(phi)
+      this.phis[i] = phi
+      this.cum[i] = i === 0 ? 0 : this.cum[i - 1] + Math.hypot(x - px, z - pz)
+      px = x
+      pz = z
     }
-    return best / SAMPLES
+    this.length = this.cum[M]
   }
-
-  const all: StationLayout[] = stopPoints.map((p, index) => {
-    const out = dirAt(stopS[index])
-    const housePos = p.clone().addScaledVector(out, HOUSE_BACK)
-    return {
-      index,
-      t: tFor(p),
-      pos: p.clone(),
-      housePos,
-      // Mặt trước nhà (+z) quay vào tâm cung, tức là nhìn ra đường.
-      houseRotY: -stopS[index] / radius,
-      bonusPos: p.clone(),
+  getPoint(t: number, out = new THREE.Vector3()): THREE.Vector3 {
+    const s = (((t % 1) + 1) % 1) * this.length
+    let lo = 0
+    let hi = this.cum.length - 1
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1
+      if (this.cum[mid] <= s) lo = mid
+      else hi = mid
     }
+    const k = (s - this.cum[lo]) / (this.cum[hi] - this.cum[lo] || 1)
+    const phi = this.phis[lo] + (this.phis[hi] - this.phis[lo]) * k
+    return out.set(this.ra * Math.cos(phi), PATH_Y, this.rb * Math.sin(phi))
+  }
+}
+
+/** Đoạn đầu [0, part] của một đường cong, tham số lại về [0, 1]. */
+class SubCurve extends THREE.Curve<THREE.Vector3> {
+  private base: THREE.Curve<THREE.Vector3>
+  private part: number
+  constructor(base: THREE.Curve<THREE.Vector3>, part: number) {
+    super()
+    this.base = base
+    this.part = part
+  }
+  getPoint(t: number, out = new THREE.Vector3()): THREE.Vector3 {
+    return this.base.getPoint(t * this.part, out)
+  }
+}
+
+/** Chiều dài cung elip từ đỉnh trước (φ = π/2) tới góc φ = π/2 + a. */
+function arcFromFront(ra: number, rb: number, a: number) {
+  const n = 2000
+  let len = 0
+  for (let i = 0; i < n; i++) {
+    const p0 = Math.PI / 2 + (a * i) / n
+    const p1 = Math.PI / 2 + (a * (i + 1)) / n
+    len += Math.hypot(ra * (Math.cos(p1) - Math.cos(p0)), rb * (Math.sin(p1) - Math.sin(p0)))
+  }
+  return len
+}
+
+function buildLoop() {
+  const total = STATION_COUNT + 1 // trạm + hộp quà
+  const wanted = (total - 1) * STEP + LEAD_IN + TAIL
+  const perimeter = wanted + MAIN_EXTRA + SKY_SHARE
+  const rb = perimeter / (2 * Math.PI * Math.sqrt((LOOP_ASPECT ** 2 + 1) / 2))
+  const ra = rb * LOOP_ASPECT
+  // Góc bắt đầu: đường chính nằm đối xứng quanh đỉnh trước của vòng.
+  let lo = 0
+  let hi = Math.PI
+  for (let i = 0; i < 50; i++) {
+    const mid = (lo + hi) / 2
+    if (arcFromFront(ra, rb, mid) < wanted / 2) lo = mid
+    else hi = mid
+  }
+  return { curve: new LoopCurve(ra, rb, Math.PI / 2 + lo), wanted }
+}
+
+const built = buildLoop()
+/** Vòng elip của cả hành trình. */
+export const loop = built.curve
+
+/** Pháp tuyến (xz) của vòng tại p, hướng ra ngoài vòng. */
+export function loopOutward(p: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(p.x / loop.ra ** 2, 0, p.z / loop.rb ** 2).normalize()
+}
+
+function insideDiscs(discs: Disc[], x: number, z: number, margin: number) {
+  return discs.some(
+    (d) => ((x - d.center.x) / Math.max(0.1, d.rx - margin)) ** 2 + ((z - d.center.z) / Math.max(0.1, d.rz - margin)) ** 2 < 1,
+  )
+}
+
+function buildLayout(): PathLayout {
+  const total = STATION_COUNT + 1
+  const length = built.wanted
+  const curve = new SubCurve(loop, length / loop.length)
+
+  const all: StationLayout[] = Array.from({ length: total }, (_, index) => {
+    const t = (LEAD_IN + index * STEP) / length
+    const pos = curve.getPointAt(t)
+    const out = loopOutward(pos)
+    const housePos = pos.clone().addScaledVector(out, -HOUSE_BACK).setY(PATH_Y)
+    return { index, t, pos, housePos, houseRotY: Math.atan2(out.x, out.z), bonusPos: pos.clone() }
   })
 
-  const box = new THREE.Box3().setFromPoints([...points, ...all.map((s) => s.housePos)])
-  const size = box.getSize(new THREE.Vector3())
-  const center = box.getCenter(new THREE.Vector3())
-  center.y = 0
-  // Hai đầu cung nằm ở góc trước của khung bao nên nới bán trục x cho đảo ôm trọn cả hai đầu.
-  const rz = size.z / 2 + 5.5
-  let rx = size.x / 2 + 4.5
-  for (const p of [...points, ...all.map((s) => s.housePos)]) {
-    const dz = (p.z - center.z) / rz
-    rx = Math.max(rx, (Math.abs(p.x - center.x) + 4.5) / Math.sqrt(Math.max(0.2, 1 - dz * dz)))
-  }
-  const island = { center, rx, rz }
+  // Đảo chính: vài khối tròn nối nhau dọc cung đường, lệch vào phía trong vòng để sau dãy nhà còn khoảng cỏ trồng cây,
+  // thêm một khối phía trước giữa làm quảng trường (sát đường, không để trống một khoảng lớn giữa đường và quảng trường).
+  const K = Math.max(2, Math.round(length / 20))
+  const r = Math.max(9, (length / K) * 0.62)
+  const discs: Disc[] = Array.from({ length: K }, (_, k) => {
+    const p = curve.getPointAt((k + 0.5) / K)
+    return { center: p.addScaledVector(loopOutward(p), -1.5).setY(0), rx: r, rz: r, top: 0 }
+  })
+  const front = curve.getPointAt(0.5)
+  const frontOut = loopOutward(front)
+  discs.push({ center: front.clone().addScaledVector(frontOut, 7).setY(0), rx: 15, rz: 8.5, top: 0 })
+  const plaza = front.clone().addScaledVector(frontOut, 6).setY(0)
 
-  // Chỗ đáp của quà bóng bay: thử lần lượt các hướng (theo dọc đường, ra phía sau đường),
-  // ưu tiên phía sau đường, giữa hai nhà (đặt phía trước thì chùm bóng bay che mất nhân vật).
+  const box = new THREE.Box3()
+  for (const d of discs) {
+    box.expandByPoint(new THREE.Vector3(d.center.x - d.rx, 0, d.center.z - d.rz))
+    box.expandByPoint(new THREE.Vector3(d.center.x + d.rx, 0, d.center.z + d.rz))
+  }
+  const size = box.getSize(new THREE.Vector3())
+  const island = { center: box.getCenter(new THREE.Vector3()).setY(0), rx: size.x / 2, rz: size.z / 2 }
+
+  // Chỗ đáp của quà bóng bay: thử lần lượt các hướng, ưu tiên phía trong vòng giữa hai nhà
+  // (phía ngoài gần camera, chùm bóng bay dễ che nhân vật).
   const pathSamples = curve.getSpacedPoints(300)
   const houses = all.map((s) => s.housePos)
   const OFFSETS: [number, number][] = [
-    [3.5, 1.6], [-3.5, 1.6], [3.5, 2.3], [-3.5, 2.3], [3.2, -2.2], [-3.2, -2.2], [2.4, -2.6], [-2.4, -2.6],
+    [3.5, -2.2], [-3.5, -2.2], [3.5, -2.8], [-3.5, -2.8], [3.2, 2.2], [-3.2, 2.2], [2.4, 2.8], [-2.4, 2.8],
   ]
   for (const s of all) {
-    const out = dirAt(stopS[s.index])
-    const along = new THREE.Vector3(-out.z, 0, out.x)
+    const out = loopOutward(s.pos)
+    const along = curve.getTangentAt(s.t).setY(0).normalize()
     const candidates = OFFSETS.map(([a, o]) => s.pos.clone().addScaledVector(along, a).addScaledVector(out, o).setY(0))
     const free = candidates.find(
       (c) =>
-        ((c.x - center.x) / (island.rx - 2)) ** 2 + ((c.z - center.z) / (island.rz - 2)) ** 2 < 1 &&
-        pathSamples.every((p) => p.distanceToSquared(c) > 1.6 * 1.6) &&
+        insideDiscs(discs, c.x, c.z, 2) &&
+        pathSamples.every((p) => p.distanceToSquared(c) > 1.8 * 1.8) &&
         houses.every((h) => h.distanceToSquared(c) > 3 * 3),
     )
     s.bonusPos = free ?? candidates[0]
   }
 
-  return {
-    curve,
-    stations: all.slice(0, STATION_COUNT),
-    gift: all[STATION_COUNT],
-    island,
-    length: curve.getLength(),
-  }
+  return { curve, stations: all.slice(0, STATION_COUNT), gift: all[STATION_COUNT], island, discs, plaza, length }
 }
 
 export const layout = buildLayout()
 
-/** Trạng thái nhân vật, chia sẻ giữa Character và CameraRig mà không cần re-render. */
+/** Điểm (x, z) nằm trên đảo chính, cách mép ít nhất `margin`. */
+export function insideMain(x: number, z: number, margin: number): boolean {
+  return insideDiscs(layout.discs, x, z, margin)
+}
+
+/** Pháp tuyến (xz) của đường chính tại t, hướng ra ngoài vòng (phía trước đường). */
+export function outwardAt(t: number): THREE.Vector3 {
+  return loopOutward(layout.curve.getPointAt(t))
+}
+
 export const mascot = {
   t: 0,
   walking: false,
