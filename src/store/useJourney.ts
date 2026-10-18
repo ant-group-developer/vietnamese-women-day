@@ -17,7 +17,13 @@ export interface BonusSlot {
   index: number
 }
 /** Hộp cài đặt: chọn nhân vật hoặc chỉnh âm lượng. */
-export type SettingsPanel = 'character' | 'audio'
+export type SettingsPanel = 'character' | 'audio' | 'photo'
+
+/** Ảnh kỷ niệm vừa chụp (đã ghép khung), giữ cả blob để tải về hoặc chia sẻ. */
+export interface Photo {
+  url: string
+  blob: Blob
+}
 
 interface JourneyState {
   phase: Phase
@@ -40,6 +46,8 @@ interface JourneyState {
   tourOpen: boolean
   /** Hộp cài đặt đang mở (null = đóng). */
   settingsOpen: SettingsPanel | null
+  /** Ảnh kỷ niệm mới nhất (hiện trong hộp 'photo'). */
+  photo: Photo | null
   /** Nhân vật dẫn đường đã chọn. */
   character: CharacterId
   /** Thời điểm bấm vào hộp quà khi còn khoá (để lắc hộp và hiện nhắc nhở). */
@@ -60,6 +68,8 @@ interface JourneyState {
   closeTour: () => void
   openSettings: (panel: SettingsPanel) => void
   closeSettings: () => void
+  /** Hiện ảnh kỷ niệm vừa chụp (thu hồi ảnh cũ). */
+  showPhoto: (photo: Photo) => void
   setCharacter: (id: CharacterId) => void
   /** Chọn nhân vật ở màn đầu rồi vào hành trình; dontShowAgain thì lần sau bỏ qua màn chọn. */
   confirmCharacter: (id: CharacterId, dontShowAgain: boolean) => void
@@ -146,6 +156,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   lastVisitedIndex: -1,
   tourOpen: false,
   settingsOpen: null,
+  photo: null,
   character: savedCharacter(),
   giftHintAt: 0,
   openGiftOnArrive: false,
@@ -159,6 +170,11 @@ export const useJourney = create<JourneyState>((set, get) => ({
   closeTour: () => set({ tourOpen: false }),
   openSettings: (panel) => set({ settingsOpen: panel }),
   closeSettings: () => set({ settingsOpen: null }),
+  showPhoto: (photo) => {
+    const old = get().photo
+    if (old) URL.revokeObjectURL(old.url)
+    set({ photo, settingsOpen: 'photo' })
+  },
   confirmCharacter: (id, dontShowAgain) => {
     get().setCharacter(id)
     try {

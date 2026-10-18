@@ -86,6 +86,13 @@ export const FilmIcon = () => (
   </Icon>
 )
 
+export const CameraIcon = () => (
+  <Icon>
+    <path d="M4 8.5a2 2 0 0 1 2-2h2l1.5-2h5l1.5 2h2a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+    <circle cx="12" cy="12.5" r="3.4" />
+  </Icon>
+)
+
 export const ChevronLeftIcon = () => (
   <Icon>
     <path d="M14.5 5.5L8 12l6.5 6.5" />

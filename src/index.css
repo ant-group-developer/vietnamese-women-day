@@ -1097,3 +1097,38 @@ button {
   .hud-flowers { font-size: 22px; }
   .hud-toast { top: 84px; }
 }
+
+/* ---------- Ảnh kỷ niệm ---------- */
+.photo-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #fff;
+  pointer-events: none;
+  animation: photo-flash 0.45s ease-out forwards;
+}
+@keyframes photo-flash {
+  from { opacity: 0.9; }
+  to { opacity: 0; }
+}
+.settings-card.photo-card { width: min(720px, 100%); }
+/* Thẻ ảnh cao: nút đóng nằm góc trên thay vì giữa mép phải. */
+.photo-card .settings-close { top: 16px; transform: none; }
+.photo-preview {
+  display: block;
+  max-width: 100%;
+  max-height: 58vh;
+  margin: 0 auto 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(90, 45, 68, 0.25);
+  /* Cho nhấn giữ để lưu ảnh trên điện thoại (body đang tắt chọn). */
+  user-select: auto;
+  -webkit-touch-callout: default;
+}
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.photo-actions .btn { text-decoration: none; }

@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { bonusAtStation, bonusTitle, droppedBonuses, nextStationIndex, useJourney } from '../store/useJourney'
-import { FilmIcon, PawIcon, VolumeIcon } from './icons'
+import { CameraIcon, FilmIcon, PawIcon, VolumeIcon } from './icons'
 import { keyboardEnabled } from '../scene/keyboard'
+import { takePhoto } from './photoFrame'
+import { playSfx } from '../audio/sound'
+import { trackEvent } from '../utils/ga'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
@@ -19,7 +22,7 @@ export function HUD() {
   const audioOn = useJourney((s) => s.audioOn)
   const bonuses = useJourney((s) => s.bonuses)
   const bonusLandedAt = useJourney((s) => s.bonusLandedAt)
-  const { goTo, openGift, openSettings, playBonus, tapBonus } = useJourney.getState()
+  const { goTo, openGift, openSettings, playBonus, tapBonus, showPhoto } = useJourney.getState()
 
   const [popIndex, setPopIndex] = useState<number | null>(null)
   const [flowerToast, setFlowerToast] = useState<string | null>(null)
@@ -67,6 +70,25 @@ export function HUD() {
     window.addEventListener('pointerdown', close)
     return () => window.removeEventListener('pointerdown', close)
   }, [bonusMenu])
+
+  // Chụp ảnh kỷ niệm: nháy đèn flash rồi mở hộp xem ảnh.
+  const [flashAt, setFlashAt] = useState(0)
+  const [shooting, setShooting] = useState(false)
+  const snap = async () => {
+    if (shooting) return
+    setShooting(true)
+    playSfx('pop')
+    setFlashAt(Date.now())
+    try {
+      const blob = await takePhoto()
+      if (blob) {
+        showPhoto({ url: URL.createObjectURL(blob), blob })
+        trackEvent('photo_capture', { flowers: useJourney.getState().visited.filter(Boolean).length })
+      }
+    } finally {
+      setShooting(false)
+    }
+  }
 
   if (phase !== 'journey' && phase !== 'gift') return null
 
@@ -125,6 +147,9 @@ export function HUD() {
           <button className="icon-btn" onClick={() => openSettings('character')} data-tour="character" title="Đổi nhân vật dẫn đường" aria-label="Đổi nhân vật">
             <PawIcon />
           </button>
+          <button className="icon-btn" onClick={snap} disabled={shooting} data-tour="photo" title="Chụp ảnh kỷ niệm" aria-label="Chụp ảnh kỷ niệm">
+            <CameraIcon />
+          </button>
           <button className="icon-btn" onClick={() => openSettings('audio')} data-tour="audio" title="Âm lượng" aria-label="Âm lượng">
             <VolumeIcon level={audioOn ? volume : 0} />
           </button>
@@ -165,6 +190,8 @@ export function HUD() {
           )}
         </div>
       </div>
+
+      {flashAt > 0 && <div key={flashAt} className="photo-flash" aria-hidden />}
 
       <AnimatePresence>
         {toast && (

@@ -4,8 +4,9 @@ import { CharacterAvatar } from './CharacterAvatar'
 import { useJourney } from '../store/useJourney'
 import { playSfx } from '../audio/sound'
 import { VolumeIcon } from './icons'
+import { trackEvent } from '../utils/ga'
 
-/** Hộp cài đặt: mở riêng phần chọn nhân vật dẫn đường hoặc phần chỉnh âm lượng. */
+/** Hộp cài đặt: mở riêng phần chọn nhân vật dẫn đường, phần chỉnh âm lượng hoặc ảnh kỷ niệm vừa chụp. */
 export function SettingsModal() {
   const panel = useJourney((s) => s.settingsOpen)
   const { closeSettings } = useJourney.getState()
@@ -22,7 +23,7 @@ export function SettingsModal() {
         >
           <motion.div
             key={panel}
-            className={`settings-card ${panel === 'audio' ? 'audio-card' : ''}`}
+            className={`settings-card ${panel === 'audio' ? 'audio-card' : ''} ${panel === 'photo' ? 'photo-card' : ''}`}
             onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, y: 40, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -32,10 +33,16 @@ export function SettingsModal() {
             <button className="modal-close settings-close" onClick={closeSettings} aria-label="Đóng">
               ✕
             </button>
-            {panel === 'character' ? <CharacterPanel /> : <AudioPanel />}
-            <button className="btn" onClick={closeSettings}>
-              Xong 💕
-            </button>
+            {panel === 'photo' ? (
+              <PhotoPanel />
+            ) : (
+              <>
+                {panel === 'character' ? <CharacterPanel /> : <AudioPanel />}
+                <button className="btn" onClick={closeSettings}>
+                  Xong 💕
+                </button>
+              </>
+            )}
           </motion.div>
         </motion.div>
       )}
@@ -106,6 +113,51 @@ function AudioPanel() {
           aria-label="Âm lượng"
         />
         <span className="volume-value">{Math.round(shown * 100)}%</span>
+      </div>
+    </>
+  )
+}
+
+const PHOTO_NAME = 'anh-ky-niem-20-10.jpg'
+
+function PhotoPanel() {
+  const photo = useJourney((s) => s.photo)
+  const { closeSettings } = useJourney.getState()
+  if (!photo) return null
+  const file = new File([photo.blob], PHOTO_NAME, { type: photo.blob.type })
+  // Điện thoại: mở bảng chia sẻ của hệ thống (Zalo, Messenger, lưu vào Ảnh...).
+  const canShare = typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
+  const share = async () => {
+    try {
+      await navigator.share({ files: [file], title: 'Ảnh kỷ niệm 20/10' })
+      trackEvent('photo_share')
+    } catch {
+      /* người dùng đóng bảng chia sẻ */
+    }
+  }
+
+  return (
+    <>
+      <h2>Ảnh kỷ niệm 📸</h2>
+      <p className="settings-sub">Lưu lại khoảnh khắc trên đảo hoa nhé!</p>
+      <img className="photo-preview" src={photo.url} alt="Ảnh kỷ niệm 20/10" />
+      <div className="photo-actions">
+        {canShare && (
+          <button className="btn" onClick={share}>
+            Chia sẻ 💌
+          </button>
+        )}
+        <a
+          className={`btn ${canShare ? 'ghost' : ''}`}
+          href={photo.url}
+          download={PHOTO_NAME}
+          onClick={() => trackEvent('photo_download')}
+        >
+          Tải ảnh ⬇️
+        </a>
+        <button className="btn ghost" onClick={closeSettings}>
+          Chụp lại 🔄
+        </button>
       </div>
     </>
   )
