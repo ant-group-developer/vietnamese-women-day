@@ -120,6 +120,9 @@ function nearestU(p: THREE.Vector3): number {
 /** u của từng trạm (chỉ số STATION_COUNT = hộp quà). */
 const stationU = [...layout.stations, layout.gift].map((s) => nearestU(s.pos))
 
+/** u của từng đảo phụ (điểm trên đường gần tâm đảo nhất), cùng thứ tự với skyIslands. */
+export const islandU = skyIslands.map((s) => nearestU(s.center))
+
 export const route = { curve, length }
 
 /** u của trạm index (-1 = điểm xuất phát). */

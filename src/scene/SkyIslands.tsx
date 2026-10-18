@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useJourney } from '../store/useJourney'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { FloatingIsland } from './Island'
@@ -251,8 +252,22 @@ export function SkyIslands() {
   const millPos = millAt ? millAt.world(0, -FEATURE_OUT - 0.3) : null
   return (
     <group>
-      {skyIslands.map((s) => (
-        <group key={s.seed} position={s.center}>
+      {skyIslands.map((s, i) => (
+        <group
+          key={s.seed}
+          position={s.center}
+          onClick={(e) => {
+            e.stopPropagation()
+            useJourney.getState().goToIsland(i)
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            document.body.style.cursor = 'pointer'
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = 'auto'
+          }}
+        >
           <FloatingIsland rx={s.rx} rz={s.rz} depth={0.55} seed={s.seed} rocks={12} shadows={false} />
         </group>
       ))}

@@ -45,7 +45,9 @@ export function LabelLayer() {
       </div>
       {skyIslands.map((s, i) => (
         <div key={s.key} className="label-anchor" ref={(el) => bindLabelElement(`island-${i}`, el)}>
-          <div className="station-label spot">{s.name}</div>
+          <div className="station-label spot tappable" onClick={() => useJourney.getState().goToIsland(i)}>
+            {s.name}
+          </div>
         </div>
       ))}
       {bonuses.map(({ stage, index }, i) => {

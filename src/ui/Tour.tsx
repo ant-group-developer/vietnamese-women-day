@@ -53,6 +53,13 @@ function buildSteps(): Step[] {
       title: 'Đi tiếp',
       text: 'Chưa biết đi đâu? Bấm nút này để tới phòng ban gần nhất mà bạn chưa ghé.',
     },
+    {
+      target: 'walk',
+      optional: true,
+      icon: '👣',
+      title: 'Đi dạo khắp các đảo',
+      text: 'Giữ nút ◀ ▶ để đi lùi hoặc đi tới dọc đường, qua cầu treo sang các đảo sở thú. Bấm vào một đảo (hoặc tên đảo) để đi thẳng tới đó.',
+    },
     { target: 'character', icon: '🐾', title: 'Bạn đồng hành', text: 'Chọn con vật dẫn đường và chỉnh tốc độ đi nhanh hay chậm.' },
     { target: 'audio', icon: '🔊', title: 'Âm lượng', text: 'Chỉnh to nhỏ hoặc tắt hẳn nhạc nền.' },
     {

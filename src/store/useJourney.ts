@@ -26,6 +26,8 @@ interface JourneyState {
   currentIndex: number
   /** Trạm đang đi tới, null nếu đứng yên. */
   targetIndex: number | null
+  /** Đảo phụ đang đi tới (chỉ số trong skyIslands), null nếu không. */
+  targetIsland: number | null
   visited: boolean[]
   /** Trạm đang mở popup. */
   openedIndex: number | null
@@ -67,6 +69,8 @@ interface JourneyState {
   /** Chọn nhân vật ở màn đầu rồi vào hành trình; dontShowAgain thì lần sau bỏ qua màn chọn. */
   confirmCharacter: (id: CharacterId, dontShowAgain: boolean) => void
   goTo: (index: number) => void
+  /** Bấm vào đảo phụ (hoặc nhãn tên đảo): đi tới giữa đảo. */
+  goToIsland: (i: number) => void
   arrive: (index: number) => void
   closeModal: () => void
   openGift: () => void
@@ -152,6 +156,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   phase: 'intro',
   currentIndex: -1,
   targetIndex: null,
+  targetIsland: null,
   visited: freshVisited(),
   openedIndex: null,
   audioOn: true,
@@ -204,7 +209,14 @@ export const useJourney = create<JourneyState>((set, get) => ({
       return
     }
     // Có thể đổi hướng ngay cả khi đang đi
-    set({ targetIndex: index, openGiftOnArrive: false })
+    set({ targetIndex: index, targetIsland: null, openGiftOnArrive: false })
+  },
+
+  goToIsland: (i) => {
+    const { openedIndex, phase, tourOpen, settingsOpen } = get()
+    if (openedIndex !== null || tourOpen || settingsOpen) return
+    if (phase !== 'journey' && phase !== 'gift') return
+    set({ targetIsland: i, targetIndex: null, openGiftOnArrive: false })
   },
 
   arrive: (index) => {
@@ -288,7 +300,7 @@ export const useJourney = create<JourneyState>((set, get) => ({
   finishVideo: () => set({ phase: 'outro' }),
 
   continueJourney: () =>
-    set({ phase: 'journey', targetIndex: null, openedIndex: null, openGiftOnArrive: false, cameraResetAt: Date.now() }),
+    set({ phase: 'journey', targetIndex: null, targetIsland: null, openedIndex: null, openGiftOnArrive: false, cameraResetAt: Date.now() }),
 
   toggleAudio: () => set((s) => ({ audioOn: !s.audioOn })),
   setSpeed: (v) => {

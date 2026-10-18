@@ -395,6 +395,8 @@ button {
 .station-label.visited { background: var(--mint-200); }
 .station-label.bonus { background: var(--lavender-200); }
 .station-label.spot { color: var(--pink-500); }
+/* Nhãn bấm được (tên đảo phụ) dù lớp nhãn bỏ qua sự kiện chuột. */
+.station-label.tappable { pointer-events: auto; cursor: pointer; }
 .station-label.spot.visited { color: var(--text); }
 /* Nhãn nằm dưới điểm neo (mũi nhọn chỉ lên), nhún nhảy như nhãn gợi ý.
    Chữ to hơn nhãn phòng ban vì nhãn bị thu nhỏ theo khoảng cách camera, trên điện thoại còn rất bé. */
@@ -425,6 +427,34 @@ button {
   0%, 100% { transform: translate(-50%, -100%); }
   50% { transform: translate(-50%, calc(-100% - 8px)); }
 }
+
+/* ---------- Nút giữ để đi (màn cảm ứng) ---------- */
+.walk-pad {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  /* Cao hơn mép dưới một chút cho vừa tầm ngón cái. */
+  bottom: calc(max(20px, env(safe-area-inset-bottom)) + 72px);
+  z-index: 11;
+  display: flex;
+  gap: 12px;
+}
+.walk-pad .icon-btn {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  /* Mờ trong suốt để không che cảnh. */
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 14px rgba(240, 85, 138, 0.12);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.walk-pad .icon-btn:hover { transform: none; background: rgba(255, 255, 255, 0.32); border-color: rgba(255, 255, 255, 0.55); color: var(--pink-500); }
+.walk-pad .icon-btn.held { transform: scale(0.94); background: rgba(240, 85, 138, 0.7); border-color: rgba(240, 85, 138, 0.7); color: #fff; }
 
 /* ---------- Camera controls ---------- */
 .cam-controls {
@@ -961,6 +991,15 @@ button {
     bottom: calc(max(20px, env(safe-area-inset-bottom)) + 64px);
   }
   .cam-controls .icon-btn { width: 38px; height: 38px; font-size: 19px; }
+  /* Điện thoại dọc: hai nút đi tách hai bên, ngay trên hàng nút camera, vừa tầm hai ngón cái. */
+  .walk-pad {
+    left: max(12px, env(safe-area-inset-left));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: calc(max(20px, env(safe-area-inset-bottom)) + 64px + 38px + 70px);
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .walk-pad .icon-btn { width: 52px; height: 52px; }
   .hud-bottom { padding: 0 16px; }
   .hud-bottom .btn { max-width: 100%; justify-content: center; text-align: center; line-height: 1.15; }
   .hud-toast { font-size: 14px; top: 118px; }

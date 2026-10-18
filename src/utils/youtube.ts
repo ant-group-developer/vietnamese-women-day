@@ -5,6 +5,6 @@ export function youtubeId(url: string): string {
 
 export function youtubeEmbed(url: string, autoplay = true): string {
   const id = youtubeId(url)
-  // loop=1 chỉ có tác dụng khi kèm playlist=<id>; vq=hd1080 là gợi ý chất lượng, YouTube có thể bỏ qua
-  return `https://www.youtube.com/embed/${id}?autoplay=${autoplay ? 1 : 0}&rel=0&playsinline=1&loop=1&playlist=${id}&vq=hd1080`
+  // Phát một lần, không lặp lại; vq=hd1080 là gợi ý chất lượng, YouTube có thể bỏ qua
+  return `https://www.youtube.com/embed/${id}?autoplay=${autoplay ? 1 : 0}&rel=0&playsinline=1&vq=hd1080`
 }

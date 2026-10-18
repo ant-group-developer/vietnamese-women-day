@@ -4,11 +4,14 @@ import { departments, GIFT_INDEX, STATION_COUNT } from '../data/departments'
 import { bonusAtStation, bonusTitle, droppedBonuses, nextStationIndex, useJourney } from '../store/useJourney'
 import { FilmIcon, PawIcon, VolumeIcon } from './icons'
 import { keyboardEnabled } from '../scene/keyboard'
+import { skyIslands } from '../scene/landmarks'
+import { WalkPad } from './WalkPad'
 
 export function HUD() {
   const phase = useJourney((s) => s.phase)
   const visited = useJourney((s) => s.visited)
   const targetIndex = useJourney((s) => s.targetIndex)
+  const targetIsland = useJourney((s) => s.targetIsland)
   const openedIndex = useJourney((s) => s.openedIndex)
   const currentIndex = useJourney((s) => s.currentIndex)
   const lastFlowerAt = useJourney((s) => s.lastFlowerAt)
@@ -72,7 +75,7 @@ export function HUD() {
 
   const count = visited.filter(Boolean).length
   const next = nextStationIndex(visited)
-  const idle = targetIndex === null && openedIndex === null
+  const idle = targetIndex === null && targetIsland === null && openedIndex === null
 
   // Quà bóng bay chưa mở mà nhân vật đang đứng cạnh: nút dưới cùng gợi ý mở quà trước.
   const waitingSlot = bonusAtStation(bonuses, currentIndex, ['ready'])
@@ -98,6 +101,8 @@ export function HUD() {
     toast = flowerToast
   } else if (targetIndex !== null) {
     toast = targetIndex === GIFT_INDEX ? 'Đang chạy tới hộp quà...\u00a0🎁' : `Đang đi tới ${departments[targetIndex].name}...`
+  } else if (targetIsland !== null) {
+    toast = `Đang sang ${skyIslands[targetIsland].name}...`
   } else if (count === 0 && currentIndex === -1) {
     toast = `Ghé thăm đủ ${STATION_COUNT} phòng ban để mở hộp quà bí mật\u00a0🎁`
   } else if (bonusWaiting) {
@@ -187,6 +192,8 @@ export function HUD() {
           <kbd>D</kbd> di chuyển
         </div>
       )}
+
+      {!keyboardEnabled && !tourOpen && <WalkPad />}
 
       <div className="hud-bottom">
         {/* Đổi nút: nút cũ ẩn hẳn rồi nút mới mới hiện, tránh hai nút chen nhau trên màn hẹp. */}

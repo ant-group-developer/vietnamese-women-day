@@ -6,7 +6,7 @@ import { isStationAvailable, useJourney } from '../store/useJourney'
 import { GIFT_INDEX } from '../data/departments'
 import { canControl, keyboard, stationAt } from './keyboard'
 import { mascot } from './path'
-import { diffU, route, routePoint, routeStationU, routeTangent, wrapU } from './route'
+import { diffU, islandU, route, routePoint, routeStationU, routeTangent, wrapU } from './route'
 import { playStep } from '../audio/sound'
 import { CHARACTERS, type CharacterSpec } from './characters'
 
@@ -111,6 +111,15 @@ export function Character() {
   const walkingRef = useRef(false)
   const arrivedAt = useRef(0)
 
+  /** Đứng đúng tại một trạm thì coi như đang ở trạm đó (bấm vào nhà là mở luôn); tới hộp quà đã mở khoá thì vào trạng thái mở quà. */
+  const syncStation = () => {
+    const st = useJourney.getState()
+    const at = stationAt(mascot.t)
+    if (at === st.currentIndex) return
+    const giftReady = at === GIFT_INDEX && isStationAvailable(st, GIFT_INDEX)
+    useJourney.setState({ currentIndex: at, phase: giftReady ? 'gift' : 'journey' })
+  }
+
   useFrame(({ clock }, dt) => {
     const time = clock.elapsedTime
     const st = useJourney.getState()
@@ -119,17 +128,27 @@ export function Character() {
     let walking = false
 
     if (keyboard.dir !== 0 && canControl()) {
-      // Đi bằng bàn phím: huỷ chỗ đang đi tới, tiến/lùi dọc đường (đường khép kín nên đi mãi một chiều là qua hết mọi nơi).
-      if (st.targetIndex !== null) useJourney.setState({ targetIndex: null, openGiftOnArrive: false })
+      // Đi bằng bàn phím (hoặc nút giữ ◀ ▶ trên màn cảm ứng): huỷ chỗ đang đi tới, tiến/lùi dọc đường
+      // (đường khép kín nên đi mãi một chiều là qua hết mọi nơi).
+      if (st.targetIndex !== null || st.targetIsland !== null) useJourney.setState({ targetIndex: null, targetIsland: null, openGiftOnArrive: false })
       mascot.t = wrapU(mascot.t + keyboard.dir * step)
       walking = true
       heading.current.lerp(routeTangent(mascot.t, tmpDir).multiplyScalar(keyboard.dir), 0.18)
       playStep(time)
-      // Đứng đúng tại một trạm thì coi như đang ở trạm đó (bấm vào nhà là mở luôn); tới hộp quà đã mở khoá thì vào trạng thái mở quà.
-      const at = stationAt(mascot.t)
-      if (at !== st.currentIndex) {
-        const giftReady = at === GIFT_INDEX && isStationAvailable(st, GIFT_INDEX)
-        useJourney.setState({ currentIndex: at, phase: giftReady ? 'gift' : 'journey' })
+      syncStation()
+    } else if (st.targetIsland !== null) {
+      // Đi tới đảo phụ theo chiều ngắn hơn quanh vòng (qua cầu treo).
+      const diff = diffU(mascot.t, islandU[st.targetIsland])
+      if (Math.abs(diff) <= step) {
+        mascot.t = islandU[st.targetIsland]
+        arrivedAt.current = time
+        useJourney.setState({ targetIsland: null })
+        syncStation()
+      } else {
+        mascot.t = wrapU(mascot.t + Math.sign(diff) * step)
+        walking = true
+        heading.current.lerp(routeTangent(mascot.t, tmpDir).multiplyScalar(Math.sign(diff)), 0.18)
+        playStep(time)
       }
     } else if (st.targetIndex !== null) {
       const target = routeStationU(st.targetIndex)
