@@ -14,3 +14,9 @@ export function rotateCamera(angle: number) {
 
 /** Tour hướng dẫn: camera nhìn vào giữa nhân vật và trạm này để thấy rõ ngôi nhà (-1 = bám nhân vật như thường). */
 export const cameraFocus = { station: -1 }
+
+/** Màn hình dọc (điện thoại) hẹp hơn nên lùi camera ra xa để thấy đủ nhà và đường. */
+export function portraitZoom(width: number, height: number) {
+  const aspect = width / height
+  return aspect < 1 ? 1 + (1 - aspect) * 1.1 : 1
+}

@@ -44,6 +44,14 @@ export interface BonusConfig extends VideoConfig {
   flowers: number
 }
 
+/** Video chiếu trên màn hình dựng ở một đảo phụ: bấm vào màn hình để xem. */
+export interface IslandVideoConfig extends VideoConfig {
+  /** Mã đảo phụ đặt màn hình (vd. "tropical", "blossom"). */
+  island: string
+  /** Tên hiển thị trên khung video (không bắt buộc). */
+  title?: string
+}
+
 export interface SiteData {
   version: 1
   departments: Department[]
@@ -51,17 +59,26 @@ export interface SiteData {
   video: VideoConfig
   /** Các video bất ngờ, mỗi video một mốc số hoa. */
   bonuses: BonusConfig[]
+  /** Video trên các đảo phụ, mỗi đảo một video. */
+  islandVideos: IslandVideoConfig[]
   updatedAt?: string
 }
 
 /** Mặc định: quà bóng bay rơi khi có 4 bông hoa. */
 export const DEFAULT_BONUS_FLOWERS = 4
 
+/** Mặc định: màn chiếu ở Đảo Nhiệt Đới và Đảo Hoa Anh Đào (cấu hình cũ chưa có mục này cũng dùng). */
+export const DEFAULT_ISLAND_VIDEOS: IslandVideoConfig[] = [
+  { island: 'tropical', type: 'youtube', src: '', title: 'Video Đảo Nhiệt Đới' },
+  { island: 'blossom', type: 'youtube', src: '', title: 'Video Đảo Hoa Anh Đào' },
+]
+
 export const LIMITS = {
   departments: 30,
   members: 100,
   tracks: 50,
   bonuses: 10,
+  islandVideos: 5,
 }
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -177,12 +194,25 @@ export function parseSiteData(input: unknown): SiteData {
     return { id, ...video(b, where), flowers, ...(title ? { title } : {}) }
   })
 
+  const islandKeys = new Set<string>()
+  const islandVideos: IslandVideoConfig[] = arr(root.islandVideos ?? DEFAULT_ISLAND_VIDEOS, 'Video trên đảo', LIMITS.islandVideos).map((input, i) => {
+    const where = `Video trên đảo #${i + 1}`
+    const o = obj(input, where)
+    const island = str(o.island, `${where} – đảo`, 30)
+    if (!SLUG_RE.test(island.toLowerCase())) fail(`${where} – mã đảo không hợp lệ`)
+    if (islandKeys.has(island)) fail(`${where} – đảo "${island}" đã có video`)
+    islandKeys.add(island)
+    const title = str(o.title, `${where} – tên`, 80, false)
+    return { island, ...video(o, where), ...(title ? { title } : {}) }
+  })
+
   return {
     version: 1,
     departments,
     music: { tracks, shuffle: m.shuffle === true, volume },
     video: video(root.video, 'Video'),
     bonuses,
+    islandVideos,
     updatedAt: typeof root.updatedAt === 'string' ? root.updatedAt : undefined,
   }
 }

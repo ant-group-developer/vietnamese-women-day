@@ -12,7 +12,7 @@ import { Outro } from './ui/Outro'
 import { Tour } from './ui/Tour'
 import { CameraControls } from './ui/CameraControls'
 import { SettingsModal } from './ui/SettingsModal'
-import { BONUSES, bonusTitle, useJourney } from './store/useJourney'
+import { BONUSES, bonusTitle, ISLAND_VIDEOS, useJourney } from './store/useJourney'
 import { bindAudioToStore } from './audio/sound'
 import { siteData } from './data/siteData'
 import { useKeyboardControls } from './scene/keyboard'
@@ -22,6 +22,9 @@ export default function App() {
   const finishVideo = useJourney((s) => s.finishVideo)
   const finishBonus = useJourney((s) => s.finishBonus)
   const bonusPlaying = useJourney((s) => s.bonusPlaying)
+  const finishIslandVideo = useJourney((s) => s.finishIslandVideo)
+  const islandVideoKey = useJourney((s) => s.islandVideo)
+  const islandVideo = ISLAND_VIDEOS.find((v) => v.island === islandVideoKey)
 
   useEffect(() => bindAudioToStore(), [])
   useKeyboardControls()
@@ -51,6 +54,14 @@ export default function App() {
             video={BONUSES[bonusPlaying]}
             ribbon={BONUSES[bonusPlaying].title ? `🎈 ${bonusTitle(bonusPlaying)} 🎈` : '🎈 Quà bất ngờ giữa đường 🎈'}
             onDone={finishBonus}
+          />
+        )}
+        {phase === 'islandVideo' && islandVideo && (
+          <GiftVideo
+            key={`island-${islandVideo.island}`}
+            video={islandVideo}
+            ribbon={`🎬 ${islandVideo.title || 'Video trên đảo'} 🎬`}
+            onDone={finishIslandVideo}
           />
         )}
         {phase === 'outro' && <Outro key="outro" />}

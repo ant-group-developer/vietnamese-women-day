@@ -213,6 +213,13 @@ export function islandHomes(island: SkyIsland): { center: THREE.Vector3; radius:
   ]
 }
 
+/** Chỗ dựng màn chiếu video trên đảo (toạ độ cục bộ): phía xa camera, cạnh điểm nhấn, tránh xa đầu cầu. */
+export const SCREEN_SPOT = { x: 2.6, z: -3.9 }
+
+export function islandScreenPoint(island: SkyIsland): THREE.Vector3 {
+  return islandFrame(island).world(SCREEN_SPOT.x, SCREEN_SPOT.z).setY(island.center.y)
+}
+
 /** Điểm nhấn lệch về phía xa camera so với đường đi qua giữa đảo. */
 export const FEATURE_OUT = 3
 

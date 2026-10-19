@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { departments, GIFT_INDEX } from '../data/departments'
-import { nextStationIndex, stationStatus, useJourney } from '../store/useJourney'
+import { ISLAND_VIDEOS, nextStationIndex, stationStatus, useJourney } from '../store/useJourney'
 import { bindLabelElement } from '../scene/labels'
 import { bonusSide } from '../scene/path'
 import { skyIslands } from '../scene/landmarks'
@@ -47,6 +47,13 @@ export function LabelLayer() {
         <div key={s.key} className="label-anchor" ref={(el) => bindLabelElement(`island-${i}`, el)}>
           <div className="station-label spot tappable" onClick={() => useJourney.getState().goToIsland(i)}>
             {s.name}
+          </div>
+        </div>
+      ))}
+      {ISLAND_VIDEOS.map((v) => (
+        <div key={v.island} className="label-anchor" ref={(el) => bindLabelElement(`island-video-${v.island}`, el)}>
+          <div className="station-label visited tappable" onClick={() => useJourney.getState().tapIslandVideo(v.island, skyIslands.findIndex((s) => s.key === v.island))}>
+            🎬 Bấm để xem video
           </div>
         </div>
       ))}

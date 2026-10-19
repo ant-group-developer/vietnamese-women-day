@@ -6,7 +6,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { bonusAtStation, useJourney } from '../store/useJourney'
 import { housePosition, layout, mascot } from './path'
 import { damp } from './utils'
-import { cameraCmd, cameraFocus } from './cameraControl'
+import { cameraCmd, cameraFocus, portraitZoom } from './cameraControl'
 
 export const CAMERA_OFFSET = new THREE.Vector3(3.6, 12.2, 14.4)
 const GIFT_OFFSET = new THREE.Vector3(0, 5.5, 9)
@@ -20,12 +20,6 @@ const offset = new THREE.Vector3()
 const Y_AXIS = new THREE.Vector3(0, 1, 0)
 const MIN_DIST = 5
 const MAX_DIST = 32
-
-/** Màn hình dọc (điện thoại) hẹp hơn nên lùi camera ra xa để thấy đủ nhà và đường. */
-function portraitZoom(width: number, height: number) {
-  const aspect = width / height
-  return aspect < 1 ? 1 + (1 - aspect) * 1.1 : 1
-}
 
 /**
  * Camera luôn cho phép xoay/zoom (OrbitControls), đồng thời bám theo nhân vật:

@@ -23,6 +23,11 @@ export const defaultSiteData: SiteData = {
     { id: 'b1', type: 'youtube', src: 'https://youtu.be/_i_wbXld_78', flowers: 2, title: 'Phần quà 1' },
     { id: 'bmv98lyhk', type: 'youtube', src: 'https://youtu.be/VQO2QAs4Uko', flowers: 5, title: 'Phần quà 2' },
   ],
+  // Video trên đảo: điền link YouTube vào `src` (hoặc sửa ở trang /admin, tab Video).
+  islandVideos: [
+    { island: 'tropical', type: 'youtube', src: '', title: 'Video Đảo Nhiệt Đới' },
+    { island: 'blossom', type: 'youtube', src: '', title: 'Video Đảo Hoa Anh Đào' },
+  ],
 }
 
 /** Cấu hình đang dùng. Được gán 1 lần trong main.tsx trước khi import App. */

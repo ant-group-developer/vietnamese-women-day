@@ -1,14 +1,15 @@
 import { useEffect, useMemo } from 'react'
-import { useJourney } from '../store/useJourney'
+import { ISLAND_VIDEOS, useJourney } from '../store/useJourney'
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { FloatingIsland } from './Island'
 import { Batches, Instances, Windmill } from './Vignettes'
-import { FEATURE_OUT, islandFrame, islandHomes, penPoint, skyIslands, ZOO_PENS, type Pen, type SkyIsland } from './landmarks'
+import { FEATURE_OUT, islandFrame, islandHomes, islandScreenPoint, penPoint, skyIslands, ZOO_PENS, type Pen, type SkyIsland } from './landmarks'
 import { seededRandom } from './path'
 import { BatchSet, BLOSSOM, FLOWERS, holidayUrl, natureUrl, PALETTE } from './envAssets'
 import { bridgePoint, bridges, bridgeTangent, onWalkway, type Bridge } from './route'
-import { setLabelTarget } from './labels'
+import { ISLAND_LABEL_FADE, setLabelTarget } from './labels'
+import { IslandScreens } from './IslandScreen'
 
 /** Nửa bề rộng mặt cầu, bằng mặt đường. */
 const BRIDGE_HALF_WIDTH = 0.78
@@ -97,6 +98,7 @@ function scatter(island: SkyIsland, b: BatchSet) {
   const { world } = islandFrame(island)
   const featureCenter = world(0, -FEATURE_OUT)
   const homes = islandHomes(island)
+  const screen = ISLAND_VIDEOS.some((v) => v.island === island.key) ? islandScreenPoint(island) : null
   const taken: [number, number][] = []
   const count = Math.round(rx * rz * 0.26)
   let treeCount = 0
@@ -110,6 +112,7 @@ function scatter(island: SkyIsland, b: BatchSet) {
     if (onWalkway(probe, 0.2)) continue
     if (Math.hypot(probe.x - featureCenter.x, probe.z - featureCenter.z) < (ZOO_PENS[island.feature] ? 4.4 : 3.4)) continue
     if ((ZOO_PENS[island.feature] ?? []).some((pen) => penPoint(island, pen).setY(probe.y).distanceTo(probe) < Math.max(pen.rx, pen.rz) + 0.8)) continue
+    if (screen && Math.hypot(probe.x - screen.x, probe.z - screen.z) < 2) continue
     if (homes.some((h) => Math.hypot(probe.x - h.center.x, probe.z - h.center.z) < h.radius + 1)) continue
     if (taken.some(([tx, tz]) => (tx - x) ** 2 + (tz - z) ** 2 < 1.6)) continue
     const k = rnd()
@@ -232,7 +235,7 @@ function HangingBridges({ list }: { list: Bridge[] }) {
 /** Neo nhãn tên đảo phía trên tâm mỗi đảo (chữ do LabelLayer vẽ). */
 function IslandLabels() {
   useEffect(() => {
-    skyIslands.forEach((s, i) => setLabelTarget(`island-${i}`, s.center.clone().add(new THREE.Vector3(0, 3.2, 0))))
+    skyIslands.forEach((s, i) => setLabelTarget(`island-${i}`, s.center.clone().add(new THREE.Vector3(0, 3.2, 0)), 0, ISLAND_LABEL_FADE))
   }, [])
   return null
 }
@@ -277,6 +280,7 @@ export function SkyIslands() {
       {mill && millAt && millPos && <Windmill position={[millPos.x, mill.center.y, millPos.z]} rotY={millAt.yaw - 0.5} scale={1.25} />}
       <HangingBridges list={bridges} />
       <IslandLabels />
+      <IslandScreens />
     </group>
   )
 }

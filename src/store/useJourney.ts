@@ -5,7 +5,7 @@ import { mascot } from '../scene/path'
 import { diffU, routeStationU } from '../scene/route'
 import { DEFAULT_CHARACTER, isCharacterId, type CharacterId } from '../scene/characters'
 
-export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro' | 'bonus'
+export type Phase = 'intro' | 'pick' | 'journey' | 'gift' | 'opening' | 'video' | 'outro' | 'bonus' | 'islandVideo'
 /**
  * Quà bóng bay giữa hành trình: none → dropping (đang rơi) → ready (đã đáp, chờ bấm)
  * → opening (bóng bay bay đi, mở nắp) → opened (đã xem video, xem lại được).
@@ -59,6 +59,12 @@ interface JourneyState {
   bonusPlaying: number
   /** Phase để quay về sau khi xem xong video bất ngờ. */
   bonusReturn: Phase
+  /** Video trên đảo đang phát (mã đảo), null nếu không. */
+  islandVideo: string | null
+  /** Phase để quay về sau khi xem xong video trên đảo. */
+  islandVideoReturn: Phase
+  /** Bấm xem video trên đảo khi còn ở xa: tới đảo đó (mã đảo) thì tự phát. */
+  islandVideoOnArrive: string | null
 
   start: () => void
   openTour: () => void
@@ -84,6 +90,11 @@ interface JourneyState {
   /** Phát video bất ngờ thứ i (cũng dùng cho nút xem lại). */
   playBonus: (i: number) => void
   finishBonus: () => void
+  /** Bấm vào màn chiếu trên đảo phụ: phát video của đảo đó. */
+  playIslandVideo: (island: string) => void
+  /** Bấm vào màn chiếu / nhãn "Bấm để xem video": đi tới đảo thứ index, tới nơi thì tự phát video. */
+  tapIslandVideo: (island: string, index: number) => void
+  finishIslandVideo: () => void
   finishVideo: () => void
   /** Rời màn kết thúc về lại bản đồ, giữ nguyên số hoa đã nhận (chỉ tải lại trang mới bắt đầu lại). */
   continueJourney: () => void
@@ -97,6 +108,8 @@ const freshVisited = () => Array.from({ length: STATION_COUNT }, () => false)
 
 /** Các video bất ngờ có video, xếp theo mốc số hoa tăng dần. */
 export const BONUSES = siteData.bonuses.filter((b) => b.src).sort((a, b) => a.flowers - b.flowers)
+/** Video trên các đảo phụ (mỗi đảo một màn chiếu). */
+export const ISLAND_VIDEOS = siteData.islandVideos
 const freshBonuses = (): BonusSlot[] => BONUSES.map(() => ({ stage: 'none', index: -1 }))
 
 const TOUR_KEY = 'vn-woman-day:tour-seen'
@@ -174,6 +187,9 @@ export const useJourney = create<JourneyState>((set, get) => ({
   bonusLandedAt: 0,
   bonusPlaying: -1,
   bonusReturn: 'journey',
+  islandVideo: null,
+  islandVideoReturn: 'journey',
+  islandVideoOnArrive: null,
 
   start: () => (pickSkipped() ? set({ phase: 'journey', tourOpen: takeFirstTour() }) : set({ phase: 'pick' })),
   openTour: () => set({ tourOpen: true }),
@@ -209,14 +225,14 @@ export const useJourney = create<JourneyState>((set, get) => ({
       return
     }
     // Có thể đổi hướng ngay cả khi đang đi
-    set({ targetIndex: index, targetIsland: null, openGiftOnArrive: false })
+    set({ targetIndex: index, targetIsland: null, openGiftOnArrive: false, islandVideoOnArrive: null })
   },
 
   goToIsland: (i) => {
     const { openedIndex, phase, tourOpen, settingsOpen } = get()
     if (openedIndex !== null || tourOpen || settingsOpen) return
     if (phase !== 'journey' && phase !== 'gift') return
-    set({ targetIsland: i, targetIndex: null, openGiftOnArrive: false })
+    set({ targetIsland: i, targetIndex: null, openGiftOnArrive: false, islandVideoOnArrive: null })
   },
 
   arrive: (index) => {
@@ -297,10 +313,46 @@ export const useJourney = create<JourneyState>((set, get) => ({
     if (get().phase === 'bonus') set({ phase: get().bonusReturn })
   },
 
+  playIslandVideo: (island) => {
+    const s = get()
+    if (s.phase !== 'journey' && s.phase !== 'gift') return
+    if (s.openedIndex !== null || s.tourOpen || s.settingsOpen) return
+    if (!ISLAND_VIDEOS.some((v) => v.island === island)) return
+    // Dừng đi để lúc đi ngang trạm không đổi phase (làm tắt video).
+    set({
+      phase: 'islandVideo',
+      islandVideoReturn: s.phase,
+      islandVideo: island,
+      targetIndex: null,
+      targetIsland: null,
+      openGiftOnArrive: false,
+      islandVideoOnArrive: null,
+    })
+  },
+
+  tapIslandVideo: (island, index) => {
+    if (!ISLAND_VIDEOS.some((v) => v.island === island)) return
+    get().goToIsland(index)
+    // Đứng sẵn ở đảo thì nhân vật "tới nơi" ngay khung hình kế tiếp và video phát luôn.
+    if (get().targetIsland === index) set({ islandVideoOnArrive: island })
+  },
+
+  finishIslandVideo: () => {
+    if (get().phase === 'islandVideo') set({ phase: get().islandVideoReturn, islandVideo: null })
+  },
+
   finishVideo: () => set({ phase: 'outro' }),
 
   continueJourney: () =>
-    set({ phase: 'journey', targetIndex: null, targetIsland: null, openedIndex: null, openGiftOnArrive: false, cameraResetAt: Date.now() }),
+    set({
+      phase: 'journey',
+      targetIndex: null,
+      targetIsland: null,
+      openedIndex: null,
+      openGiftOnArrive: false,
+      islandVideoOnArrive: null,
+      cameraResetAt: Date.now(),
+    }),
 
   toggleAudio: () => set((s) => ({ audioOn: !s.audioOn })),
   setSpeed: (v) => {

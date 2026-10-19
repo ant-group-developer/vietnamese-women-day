@@ -67,7 +67,6 @@ export function GiftVideo({ video, ribbon, onDone }: { video: VideoConfig; ribbo
             <video
               ref={videoRef}
               src={video.src}
-              autoPlay
               playsInline
               controls
               onLoadedMetadata={(e) => {

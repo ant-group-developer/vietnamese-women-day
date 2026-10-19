@@ -130,7 +130,7 @@ export function Character() {
     if (keyboard.dir !== 0 && canControl()) {
       // Đi bằng bàn phím (hoặc nút giữ ◀ ▶ trên màn cảm ứng): huỷ chỗ đang đi tới, tiến/lùi dọc đường
       // (đường khép kín nên đi mãi một chiều là qua hết mọi nơi).
-      if (st.targetIndex !== null || st.targetIsland !== null) useJourney.setState({ targetIndex: null, targetIsland: null, openGiftOnArrive: false })
+      if (st.targetIndex !== null || st.targetIsland !== null) useJourney.setState({ targetIndex: null, targetIsland: null, openGiftOnArrive: false, islandVideoOnArrive: null })
       mascot.t = wrapU(mascot.t + keyboard.dir * step)
       walking = true
       heading.current.lerp(routeTangent(mascot.t, tmpDir).multiplyScalar(keyboard.dir), 0.18)
@@ -144,6 +144,9 @@ export function Character() {
         arrivedAt.current = time
         useJourney.setState({ targetIsland: null })
         syncStation()
+        // Đã bấm xem video trên đảo này từ xa: tới nơi thì phát luôn.
+        const pending = useJourney.getState().islandVideoOnArrive
+        if (pending) useJourney.getState().playIslandVideo(pending)
       } else {
         mascot.t = wrapU(mascot.t + Math.sign(diff) * step)
         walking = true

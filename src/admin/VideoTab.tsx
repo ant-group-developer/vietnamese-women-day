@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react'
-import { DEFAULT_BONUS_FLOWERS, LIMITS, type BonusConfig, type VideoConfig } from '../data/siteData'
+import { DEFAULT_BONUS_FLOWERS, LIMITS, type BonusConfig, type IslandVideoConfig, type VideoConfig } from '../data/siteData'
 import { youtubeEmbed } from '../utils/youtube'
 import { uploadFile } from './api'
 import type { TabProps } from './AdminApp'
@@ -19,6 +19,9 @@ export function VideoTab({ data, update, onError }: TabProps) {
       return { ...d, bonuses: [...d.bonuses, { id: `b${Date.now().toString(36)}`, type: 'mp4', src: '', flowers }] }
     })
   const removeBonus = (id: string) => update((d) => ({ ...d, bonuses: d.bonuses.filter((b) => b.id !== id) }))
+
+  const patchIsland = (island: string, patch: Partial<IslandVideoConfig>) =>
+    update((d) => ({ ...d, islandVideos: d.islandVideos.map((v) => (v.island === island ? { ...v, ...patch } : v)) }))
 
   const sameFlowers = (b: BonusConfig) => bonuses.some((o) => o.id !== b.id && o.src && b.src && o.flowers === b.flowers)
 
@@ -91,6 +94,32 @@ export function VideoTab({ data, update, onError }: TabProps) {
           {sameFlowers(b) && (
             <p className="hint">Có video khác cùng mốc {b.flowers} hoa: video sau sẽ rơi xuống ở bông hoa kế tiếp.</p>
           )}
+        </VideoEditor>
+      ))}
+
+      <div className="card">
+        <h2>Video trên đảo 🎬 ({data.islandVideos.length})</h2>
+        <p className="hint">
+          Mỗi đảo có một màn chiếu ngoài trời; bấm vào màn chiếu (hoặc nhãn “Bấm để xem video”) để xem. Đảo chưa có video sẽ hiện thông
+          báo “Chưa có video”.
+        </p>
+      </div>
+
+      {data.islandVideos.map((v) => (
+        <VideoEditor
+          key={v.island}
+          title={`🎬 ${v.title || v.island}`}
+          hint=""
+          emptyHint="Chưa có video."
+          uploadName={`island-${v.island}`}
+          video={v}
+          onChange={(video) => patchIsland(v.island, video)}
+          onError={onError}
+        >
+          <label className="field">
+            <span>Tên hiển thị</span>
+            <input maxLength={80} value={v.title ?? ''} onChange={(e) => patchIsland(v.island, { title: e.target.value || undefined })} />
+          </label>
         </VideoEditor>
       ))}
     </div>
